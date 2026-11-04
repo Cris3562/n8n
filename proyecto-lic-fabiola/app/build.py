@@ -12,6 +12,13 @@ for marca, archivo in [("/*LIB_XLSX*/", "vendor/xlsx-js-style-1.2.0.min.js"), ("
     assert marca in html, marca
     html = html.replace(marca, js(archivo), 1)
 html = html.replace("{{LOGO}}", logo)
+# Fuente Montserrat incluida (sin conexión a Google Fonts)
+fuentes = "".join(
+    f"@font-face{{font-family:'Montserrat';font-style:normal;font-weight:{w};font-display:swap;"
+    f"src:url(data:font/woff2;base64,{base64.b64encode((R / f'vendor/fonts/montserrat-latin-{w}-normal.woff2').read_bytes()).decode()}) format('woff2');}}"
+    for w in (400, 500, 600, 700, 800))
+assert "/*FONTS*/" in html
+html = html.replace("/*FONTS*/", fuentes, 1)
 out = R / "dist/Unificacion_Bases_NSVS.html"
 out.parent.mkdir(exist_ok=True)
 out.write_text(html, encoding="utf-8")
