@@ -10,6 +10,8 @@
 <script id="lib-xlsx">/*LIB_XLSX*/</script>
 <script>/*LIB_CHART*/</script>
 <script>/*LIB_PPTX*/</script>
+<script>/*LIB_JSPDF*/</script>
+<script>/*LIB_H2C*/</script>
 <script id="lib-core">/*CORE*/</script>
 <style>
   :root {
@@ -170,7 +172,17 @@
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 32px; }
   footer b { color: var(--navy); }
 
-  /* ---------- Impresión / PDF ---------- */
+  /* ---------- Modo PDF (una sola hoja) ---------- */
+  #dash.pdf-mode { width: 2080px; padding: 22px; background: var(--soft); margin: 0; }
+  #dash.pdf-mode .kpis { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  #dash.pdf-mode .dgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #dash.pdf-mode .chartbox { height: 225px; }
+  #dash.pdf-mode .box, #dash.pdf-mode .kpi { box-shadow: none; border: 1px solid var(--soft-2); }
+  #dash.pdf-mode .box .bd { overflow: visible; }
+  .velo { position: fixed; inset: 0; background: rgba(13,35,80,.55); color: #fff; display: grid; place-items: center; z-index: 50; font-weight: 700; font-size: 18px; }
+  .velo div { background: var(--navy); padding: 22px 30px; border-radius: 16px; display: flex; gap: 14px; align-items: center; box-shadow: var(--shadow); }
+
+  /* ---------- Impresión ---------- */
   @page { size: A4 landscape; margin: 8mm; }
   @media print {
     body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -296,7 +308,7 @@
           Anexo E (APS) · Excel
         </button>
         <button class="btn orange" id="btnPptx">PowerPoint</button>
-        <button class="btn" id="btnPdf">PDF</button>
+        <button class="btn" id="btnPdf">PDF (1 hoja)</button>
       </div>
     </div>
     <div id="dash" class="hidden"></div>
@@ -548,7 +560,35 @@
       descargar(r.buf, `02. ANEXO En Formato APS ${EMPRESA.corto} ${MES()} ${periodo().anio}.xlsx`);
     } catch (err) { msg("msg3", err.message, "err"); }
   });
-  $("btnPdf").addEventListener("click", () => window.print());
+  $("btnPdf").addEventListener("click", () => generarPdf().catch((err) => { msg("msg3", "No se pudo generar el PDF: " + err.message, "err"); }));
+
+  /* ---------- PDF de una hoja (descarga directa, sin imprimir) ---------- */
+  async function generarPdf() {
+    const dash = $("dash"), btn = $("btnPdf");
+    btn.disabled = true;
+    const velo = document.createElement("div"); velo.className = "velo";
+    velo.innerHTML = '<div><div class="spin"></div>Generando PDF…</div>';
+    document.body.appendChild(velo);
+    const frame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 60)));
+    try {
+      dash.classList.add("pdf-mode");
+      await frame(); charts.forEach((c) => c.resize()); await frame();
+      const canvas = await html2canvas(dash, { scale: 2, backgroundColor: "#F2F8FE", logging: false, windowWidth: 2120 });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
+      const W = 297, H = 210, m = 5;
+      const k = Math.min((W - 2 * m) / canvas.width, (H - 2 * m) / canvas.height);
+      const w = canvas.width * k, h = canvas.height * k;
+      pdf.setFillColor(242, 248, 254); pdf.rect(0, 0, W, H, "F");
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.93), "JPEG", (W - w) / 2, (H - h) / 2, w, h);
+      const P = periodo();
+      pdf.save(`Informe Ejecutivo Gerencial Primas y Reservas ${EMPRESA.corto} ${Core.MESES[P.mes]} ${P.anio}.pdf`);
+    } finally {
+      dash.classList.remove("pdf-mode");
+      await frame(); charts.forEach((c) => c.resize());
+      velo.remove(); btn.disabled = false;
+    }
+  }
   $("btnPptx").addEventListener("click", () => { try { generarPptx(); } catch (err) { msg("msg3", "No se pudo generar el PowerPoint: " + err.message, "err"); } });
 
   /* ---------- Textos del informe ---------- */

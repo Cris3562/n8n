@@ -8,7 +8,7 @@ def js(p): return (R / p).read_text(encoding="utf-8").replace("</script", "<\\/s
 html = (R / "src/template.html").read_text(encoding="utf-8")
 logo = "data:image/png;base64," + base64.b64encode((R / "vendor/logo-nacional-seguros.png").read_bytes()).decode()
 for marca, archivo in [("/*LIB_XLSX*/", "vendor/xlsx-js-style-1.2.0.min.js"), ("/*LIB_CHART*/", "vendor/chart-4.4.1.umd.js"),
-                       ("/*LIB_PPTX*/", "vendor/pptxgenjs-3.12.0.bundle.js"), ("/*CORE*/", "src/core.js")]:
+                       ("/*LIB_PPTX*/", "vendor/pptxgenjs-3.12.0.bundle.js"), ("/*LIB_JSPDF*/", "vendor/jspdf-2.5.1.umd.min.js"), ("/*LIB_H2C*/", "vendor/html2canvas-1.4.1.min.js"), ("/*CORE*/", "src/core.js")]:
     assert marca in html, marca
     html = html.replace(marca, js(archivo), 1)
 html = html.replace("{{LOGO}}", logo)

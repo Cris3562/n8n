@@ -12,7 +12,7 @@ Todo se procesa **en la computadora de quien la usa**: los Excel no se suben a n
 | **1. Consolidar** | Las 5 descargas de sistemas: MASIVOS (PxC), ELIFE II, ESALUD, INMOTION, PREPAGA (en USD) | `01. APS REPORTE DE PRIMAS POR COBRAR Y RESERVAS CIERRE NSVS <MES> <AÑO> MN.xlsx` (hoja BASE) |
 | *(manual)* | — | Ajustes manuales (reclasificación de mora) en el Excel descargado |
 | **2. Conciliación** | (usa el consolidado) y luego la respuesta de Contabilidad | Archivo para Contabilidad (hoja PrimaXcobrar) y conciliación con diferencias |
-| **3. APS y Dashboard** | El consolidado **final ajustado** | `02. ANEXO En Formato APS …xlsx`, dashboard gerencial, **PDF** (Imprimir → Guardar como PDF) y **PowerPoint** |
+| **3. APS y Dashboard** | El consolidado **final ajustado** | `02. ANEXO En Formato APS …xlsx`, dashboard gerencial, **PDF de una hoja** (descarga directa) y **PowerPoint** |
 
 ## Reglas que aplica (prompt "NSVS – Consolidación de planillas" + HOMOLOGACION COLUMNAS)
 
@@ -32,7 +32,7 @@ Verificado con el cierre de **septiembre 2026**: el consolidado, el Anexo E y el
 ```
 app/src/core.js         motor de cálculo (lectura, homologación, Anexo E, conciliación, análisis)
 app/src/template.html   interfaz
-app/vendor/             librerías incluidas (xlsx-js-style 1.2.0, Chart.js 4.4.1, PptxGenJS 3.12.0) y logo
+app/vendor/             librerías incluidas (xlsx-js-style 1.2.0, Chart.js 4.4.1, PptxGenJS 3.12.0, jsPDF 2.5.1, html2canvas 1.4.1) y logo
 app/build.py            arma todo en un solo HTML → app/dist/Unificacion_Bases_NSVS.html
 netlify/                carpeta lista para publicar (index.html)
 ```
