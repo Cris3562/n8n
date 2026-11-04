@@ -160,6 +160,12 @@
     }
     if (!ws) throw new Error(`No se encontró la fila de encabezados (Ramo / Regional) en el archivo de ${sistema}.`);
     const header = rows[hr];
+    // Fecha de corte del reporte (ej. "FECHA DE CORTE : 30/09/2026"), si viene en el título
+    let corte = null;
+    for (let i = 0; i < hr && !corte; i++) for (const v of rows[i] || []) {
+      const m = typeof v === "string" && v.match(/fecha\s+de\s+corte\s*:?\s*(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/i);
+      if (m) { corte = { dia: +m[1], mes: +m[2] - 1, anio: +m[3] }; break; }
+    }
     const { colMap, faltantes } = mapColumns(sistema, header);
     if (faltantes.length) throw new Error(`En ${sistema} faltan columnas: ${faltantes.join(", ")}. ¿Es el archivo correcto?`);
     const extrasIdx = header.map((h, j) => (colMap[j] === null && !vacio(h) ? j : -1)).filter((j) => j >= 0);
@@ -186,7 +192,7 @@
       extraVals.push(extrasIdx.map((j) => (vacio(src[j]) ? null : src[j])));
     }
     if (!out.length) avisos.push(`El archivo de ${sistema} no tiene filas con número de póliza.`);
-    return { rows: out, extras, extraVals, avisos };
+    return { rows: out, extras, extraVals, avisos, corte };
   }
 
   /** Une todos los sistemas: columnas homogéneas + columnas no homologadas al final (Criterio 1) */

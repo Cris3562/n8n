@@ -192,6 +192,12 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
     }
     if (!ws) throw new Error(`No se encontró la fila de encabezados (Ramo / Regional) en el archivo de ${sistema}.`);
     const header = rows[hr];
+    // Fecha de corte del reporte (ej. "FECHA DE CORTE : 30/09/2026"), si viene en el título
+    let corte = null;
+    for (let i = 0; i < hr && !corte; i++) for (const v of rows[i] || []) {
+      const m = typeof v === "string" && v.match(/fecha\s+de\s+corte\s*:?\s*(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/i);
+      if (m) { corte = { dia: +m[1], mes: +m[2] - 1, anio: +m[3] }; break; }
+    }
     const { colMap, faltantes } = mapColumns(sistema, header);
     if (faltantes.length) throw new Error(`En ${sistema} faltan columnas: ${faltantes.join(", ")}. ¿Es el archivo correcto?`);
     const extrasIdx = header.map((h, j) => (colMap[j] === null && !vacio(h) ? j : -1)).filter((j) => j >= 0);
@@ -218,7 +224,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
       extraVals.push(extrasIdx.map((j) => (vacio(src[j]) ? null : src[j])));
     }
     if (!out.length) avisos.push(`El archivo de ${sistema} no tiene filas con número de póliza.`);
-    return { rows: out, extras, extraVals, avisos };
+    return { rows: out, extras, extraVals, avisos, corte };
   }
 
   /** Une todos los sistemas: columnas homogéneas + columnas no homologadas al final (Criterio 1) */
@@ -831,6 +837,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
       <select id="mes"></select>
       <input id="anio" type="number" min="2020" max="2100">
       <span style="opacity:.75;font-weight:500">· Nacional Seguros Vida y Salud S.A.</span>
+      <span id="corteTxt" style="color:#9FE3C4;font-weight:600"></span>
     </div>
   </div>
 </section>
@@ -940,7 +947,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
           const r = Core.procesarSistema(m.sistema, Core.readWorkbook(new Uint8Array(m.buf)));
           st.sist[m.sistema] = r;
           const t = r.rows.reduce((s, x) => s + (typeof x[9] === "number" ? x[9] : 0), 0);
-          postMessage({ id: m.id, ok: true, filas: r.rows.length, pxc: t, avisos: r.avisos });
+          postMessage({ id: m.id, ok: true, filas: r.rows.length, pxc: t, avisos: r.avisos, corte: r.corte });
         } else if (m.cmd === "quitar") {
           delete st.sist[m.sistema]; postMessage({ id: m.id, ok: true });
         } else if (m.cmd === "consolidar") {
@@ -1018,6 +1025,8 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 
   /* ================= PASO 1 ================= */
   const cargados = {};
+  let corteDetectado = null;
+  const s = (id) => Core.SISTEMAS.find((x) => x.id === id).titulo.split(" (")[0];
   $("slots").innerHTML = Core.SISTEMAS.map((s, i) => `
     <label class="slot" data-sis="${s.id}"><div class="ico"></div>
       <div class="meta"><div class="k">Sistema ${i + 1} · ${s.id}</div><div class="t">${esc(s.titulo)}</div><div class="f"></div></div>
@@ -1031,6 +1040,10 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
         const buf = await file.arrayBuffer();
         const r = await call({ cmd: "sistema", sistema: sis, buf }, [buf]);
         cargados[sis] = { name: file.name, ...r };
+        if (r.corte && !corteDetectado) {
+          corteDetectado = r.corte; $("mes").value = r.corte.mes; $("anio").value = r.corte.anio;
+          $("corteTxt").textContent = `✔ Cierre detectado en ${s(sis)}: ${String(r.corte.dia).padStart(2, "0")}/${String(r.corte.mes + 1).padStart(2, "0")}/${r.corte.anio}`;
+        }
         setSlot(el, "loaded", `${file.name} · ${fmt(r.filas, 0)} registros · PxC ${fmt(r.pxc)}`);
       } catch (err) { setSlot(el, "error", err.message); }
       refresh1();
@@ -1065,6 +1078,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
   $("btnReset1").addEventListener("click", async () => {
     for (const s of Object.keys(cargados)) { await call({ cmd: "quitar", sistema: s }); delete cargados[s]; }
     document.querySelectorAll("#slots .slot").forEach((el) => setSlot(el, "", "Seleccionar archivo"));
+    corteDetectado = null; $("corteTxt").textContent = "";
     $("res1").classList.add("hidden"); msg("msg1", ""); refresh1();
   });
 
