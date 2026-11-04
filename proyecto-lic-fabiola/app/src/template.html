@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Unificación de Bases · Cobranzas NSVS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script id="lib-xlsx">/*LIB_XLSX*/</script>
+<script>/*LIB_CHART*/</script>
+<script>/*LIB_PPTX*/</script>
+<script id="lib-core">/*CORE*/</script>
+<style>
+  :root {
+    --navy: #0D2350; --navy-deep: #002857; --blue: #1565D8; --blue-mid: #0B4FC0; --blue-light: #4AA0F7;
+    --orange: #F36A10; --orange-light: #FFA23F; --muted: #5B7194;
+    --soft: #F2F8FE; --soft-2: #DBE8F7; --white: #FFFFFF; --ok: #12805C; --ok-soft: #E7F6EF; --err: #C62828; --err-soft: #FDECEC;
+    --shadow: 0 10px 30px rgba(13, 35, 80, .08), 0 2px 6px rgba(13, 35, 80, .05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--soft); color: var(--navy); font-family: "Montserrat", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  button, select, input { font: inherit; }
+
+  /* ---------- Encabezado ---------- */
+  .hero { position: relative; overflow: hidden; color: #fff; background: linear-gradient(120deg, var(--navy-deep) 0%, var(--navy) 45%, var(--blue-mid) 100%); }
+  .hero svg.waves { position: absolute; right: -40px; bottom: -10px; width: 760px; max-width: 90%; opacity: .55; pointer-events: none; }
+  .hero svg.leaves { position: absolute; right: 4%; top: 92px; width: 110px; opacity: .95; pointer-events: none; }
+  @media (max-width: 900px) { .hero svg.leaves { display: none; } }
+  .hero-inner { position: relative; max-width: 1180px; margin: 0 auto; padding: 22px 24px 96px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 38px; }
+  .logo-pill { background: #fff; border-radius: 14px; padding: 10px 16px; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+  .logo-pill img { height: 40px; width: auto; display: block; }
+  .empresa { display: flex; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 4px; gap: 4px; }
+  .empresa button { border: 0; background: transparent; color: rgba(255,255,255,.75); padding: 8px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .empresa button.on { background: #fff; color: var(--navy); }
+  .empresa button:disabled { cursor: not-allowed; opacity: .6; }
+  .empresa small { font-weight: 500; font-size: 10.5px; color: var(--orange-light); margin-left: 4px; }
+  .eyebrow { display: flex; align-items: center; gap: 12px; color: var(--orange-light); font-weight: 700; font-size: 12.5px; letter-spacing: .22em; text-transform: uppercase; margin-bottom: 14px; }
+  .eyebrow::before { content: ""; width: 34px; height: 3px; border-radius: 3px; background: var(--orange); }
+  .hero h1 { margin: 0; font-weight: 800; font-size: clamp(27px, 4.2vw, 44px); line-height: 1.1; letter-spacing: -.01em; max-width: 860px; }
+  .hero h1 em { font-style: normal; color: var(--blue-light); }
+  .hero .lead { margin: 14px 0 0; font-size: 15.5px; color: rgba(255,255,255,.8); max-width: 700px; line-height: 1.55; }
+  .periodo { margin-top: 22px; display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+  .periodo select, .periodo input { border: 0; border-radius: 8px; padding: 6px 8px; color: var(--navy); font-weight: 600; }
+  .periodo input { width: 84px; }
+
+  /* ---------- Contenido ---------- */
+  main { max-width: 1180px; margin: -64px auto 0; padding: 0 24px 48px; position: relative; }
+  @media (max-width: 680px) { .hero-inner { padding: 18px 16px 84px; } main { padding: 0 16px 40px; } }
+  .card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow); }
+  .panel { padding: 26px; }
+  @media (max-width: 680px) { .panel { padding: 18px; } }
+  .tabs { display: flex; gap: 8px; padding: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab { flex: 1 1 200px; display: flex; align-items: center; gap: 12px; border: 0; background: transparent; text-align: left; padding: 12px 14px; border-radius: 12px; cursor: pointer; color: var(--muted); }
+  .tab i { font-style: normal; flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--soft-2); color: var(--navy); font-weight: 800; font-size: 13px; }
+  .tab b { display: block; font-size: 14px; color: var(--navy); }
+  .tab span { font-size: 12px; }
+  .tab.on { background: var(--soft); box-shadow: inset 0 0 0 1.5px var(--blue); }
+  .tab.on i { background: var(--blue); color: #fff; }
+  .tab.done i { background: var(--ok); color: #fff; }
+  .step { display: none; }
+  .step.on { display: block; animation: in .35s ease-out; }
+  @keyframes in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .section-title h2 { margin: 0; font-size: 20px; font-weight: 700; }
+  .section-title h2 em { font-style: normal; color: var(--blue); }
+  .section-title small { color: var(--muted); font-size: 13px; }
+  .help { color: var(--muted); font-size: 13.5px; line-height: 1.55; margin: 6px 0 18px; }
+  .help b { color: var(--navy); }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .grid.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 860px) { .grid.g3 { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 680px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .slot { min-width: 0; display: flex; gap: 14px; align-items: center; padding: 16px; border-radius: 14px; cursor: pointer; border: 1.5px dashed #C3D4EC; background: var(--soft); transition: border-color .2s ease-out, background .2s ease-out; position: relative; }
+  .slot:hover, .slot.drag { border-color: var(--blue); background: #EAF3FE; }
+  .slot.loaded { border-style: solid; border-color: #A9DCC6; background: var(--ok-soft); }
+  .slot.busy { border-style: solid; border-color: var(--blue-light); background: #EAF3FE; }
+  .slot.error { border-style: solid; border-color: #F1B4B4; background: var(--err-soft); }
+  .slot input { display: none; }
+  .ico { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; }
+  .slot.loaded .ico { background: var(--ok); }
+  .slot.error .ico { background: var(--err); }
+  .ico svg { width: 22px; height: 22px; }
+  .slot .meta { min-width: 0; flex: 1; }
+  .slot .k { font-size: 11px; font-weight: 700; letter-spacing: .16em; color: var(--orange); text-transform: uppercase; }
+  .slot .t { font-weight: 700; font-size: 15px; margin: 2px 0 3px; }
+  .slot .f { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slot.loaded .f { color: var(--ok); font-weight: 600; }
+  .slot.error .f { color: var(--err); font-weight: 600; white-space: normal; }
+  .spin { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: sp 1s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  .actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--soft-2); }
+  .btn { font-weight: 600; font-size: 14px; border-radius: 12px; padding: 12px 18px; cursor: pointer; border: 1.5px solid var(--soft-2); background: #fff; color: var(--navy); transition: .2s ease-out; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { border-color: var(--blue); color: var(--blue); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; padding: 13px 22px; box-shadow: 0 6px 16px rgba(21, 101, 216, .28); }
+  .btn.primary:hover { background: var(--blue-mid); border-color: var(--blue-mid); color: #fff; }
+  .btn.orange { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .btn.orange:hover { background: #d95b08; color: #fff; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+  .btn svg { width: 18px; height: 18px; }
+  .counter { margin-left: auto; font-size: 13px; color: var(--muted); }
+  .counter b { color: var(--navy); }
+  .msg { min-height: 20px; font-size: 13.5px; color: var(--muted); margin-top: 12px; }
+  .msg.err { color: var(--err); font-weight: 600; }
+  .msg.ok { color: var(--ok); font-weight: 600; }
+  .progress { height: 6px; border-radius: 6px; background: var(--soft-2); overflow: hidden; margin-top: 14px; display: none; }
+  .progress div { height: 100%; width: 40%; background: linear-gradient(90deg, var(--blue), var(--blue-light)); animation: indet 1.3s ease-in-out infinite; }
+  @keyframes indet { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+  .note { margin-top: 16px; display: flex; gap: 10px; align-items: flex-start; background: #FFF6EE; border: 1px solid #FBD6B7; color: #8A3F06; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+  .note b { color: #6B3004; }
+
+  .tablewrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--soft-2); margin-top: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { background: var(--navy); color: #fff; font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  th, td { padding: 9px 12px; text-align: left; white-space: nowrap; }
+  td { border-bottom: 1px solid var(--soft-2); }
+  tr:nth-child(even) td { background: #FAFCFF; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.tot td { background: var(--soft-2) !important; font-weight: 700; }
+  .pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.bad { background: var(--err-soft); color: var(--err); }
+  .pill.wait { background: var(--soft-2); color: var(--muted); }
+  .sub-h { font-size: 15px; font-weight: 700; margin: 26px 0 4px; display: flex; align-items: center; gap: 10px; }
+  .sub-h .num { width: 24px; height: 24px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 12px; display: grid; place-items: center; }
+  .hidden { display: none !important; }
+
+  /* ---------- Dashboard ---------- */
+  #dash { margin-top: 22px; }
+  .dash-head { flex-wrap: nowrap !important; background: linear-gradient(120deg, var(--navy-deep), var(--navy) 60%, var(--blue-mid)); color: #fff; border-radius: 16px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .dash-head h3 { margin: 0; font-size: 20px; letter-spacing: .01em; }
+  .dash-head p { margin: 4px 0 0; font-size: 12.5px; color: rgba(255,255,255,.8); }
+  .dash-head img { height: 34px; background: #fff; padding: 6px 10px; border-radius: 10px; flex: none; }
+  .box h4 small { font-weight: 500; text-transform: none; letter-spacing: 0; opacity: .8; }
+  .kpis { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+  @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 680px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { background: #fff; border-radius: 14px; padding: 14px; box-shadow: var(--shadow); border-top: 4px solid var(--blue); min-width: 0; }
+  .kpi.or { border-top-color: var(--orange); }
+  .kpi.dark { background: var(--navy); color: #fff; border-top-color: var(--orange); }
+  .kpi .l { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .kpi.dark .l, .kpi.dark .s { color: rgba(255,255,255,.75); }
+  .kpi .v { font-size: 20px; font-weight: 800; margin: 6px 0 4px; letter-spacing: -.01em; line-height: 1.15; }
+  .kpi .v small { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .kpi.dark .v small { color: rgba(255,255,255,.75); }
+  .kpi .s { font-size: 11.5px; color: var(--muted); }
+  .dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 1000px) { .dgrid { grid-template-columns: minmax(0, 1fr); } }
+  .box { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+  .box h4 { margin: 0; background: var(--navy); color: #fff; font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; padding: 10px 14px; text-align: center; }
+  .box .bd { padding: 12px; }
+  .box table { font-size: 11.5px; }
+  .box .bd { overflow-x: auto; }
+  .box th, .box td { padding: 6px 6px; }
+  .box th { font-size: 10px; letter-spacing: .03em; }
+  .box td:first-child { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  .chartbox { position: relative; height: 270px; }
+  .alert { border: 2px solid var(--orange); border-radius: 12px; padding: 14px; }
+  .alert .big { color: var(--orange); font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 10px; }
+  .alert dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 12.5px; }
+  .alert dt { font-weight: 700; }
+  .alert dd { margin: 0; overflow-wrap: anywhere; }
+  .bul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; }
+  .bul li { margin-bottom: 8px; }
+  .bul li::marker { color: var(--blue); font-weight: 800; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 32px; }
+  footer b { color: var(--navy); }
+
+  /* ---------- Impresión / PDF ---------- */
+  @page { size: A4 landscape; margin: 8mm; }
+  @media print {
+    body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .hero, .tabs, footer, .no-print, #step1, #step2, #s3-carga { display: none !important; }
+    main { margin: 0; padding: 0; max-width: none; }
+    .card, .panel { box-shadow: none !important; padding: 0 !important; background: transparent; }
+    #step3 { display: block !important; }
+    #dash { margin: 0; }
+    .kpis { grid-template-columns: repeat(7, 1fr) !important; }
+    .dgrid { grid-template-columns: repeat(3, 1fr) !important; break-inside: avoid; }
+    .box, .kpi { box-shadow: none; border: 1px solid var(--soft-2); break-inside: avoid; }
+    body { zoom: .86; }
+    .chartbox { height: 250px; }
+    .dgrid { margin-bottom: 10px; }
+    .pb { break-before: page; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <svg class="waves" viewBox="0 0 760 260" fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#4AA0F7" stop-opacity="0"/><stop offset="1" stop-color="#4AA0F7"/></linearGradient>
+      <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#1565D8" stop-opacity="0"/><stop offset="1" stop-color="#1565D8"/></linearGradient>
+    </defs>
+    <path d="M0 220 C 180 140, 330 260, 520 160 S 720 60, 760 70 L760 260 L0 260Z" fill="url(#g2)" opacity=".55"/>
+    <path d="M60 250 C 250 170, 400 250, 560 190 S 720 120, 760 130" stroke="url(#g1)" stroke-width="2"/>
+    <path d="M20 200 C 220 120, 360 210, 540 130 S 710 40, 760 40" stroke="url(#g1)" stroke-width="1.5" opacity=".7"/>
+  </svg>
+  <svg class="leaves" viewBox="0 0 140 120" aria-hidden="true">
+    <path d="M38 78 C 60 30, 110 18, 136 22 C 128 56, 96 96, 38 78Z" fill="#F36A10"/>
+    <path d="M38 78 C 70 60, 100 42, 128 28" stroke="#FFA23F" stroke-width="2" fill="none" opacity=".7"/>
+    <path d="M6 112 C 20 84, 52 74, 72 76 C 66 98, 44 118, 6 112Z" fill="#FFA23F"/>
+  </svg>
+  <div class="hero-inner">
+    <div class="topbar">
+      <div class="logo-pill"><img src="{{LOGO}}" alt="Nacional Seguros"></div>
+      <div class="empresa" role="group" aria-label="Empresa">
+        <button class="on" type="button">Vida y Salud</button>
+        <button type="button" disabled title="Próximamente">Patrimoniales y Fianzas<small>próximamente</small></button>
+      </div>
+    </div>
+    <div class="eyebrow">Área Cobranzas</div>
+    <h1>Unificación Bases de <em>Reservas</em> y <em>Primas por Cobrar</em></h1>
+    <p class="lead">Consolida los 5 sistemas, prepara la conciliación con Contabilidad y genera el Anexo E para la APS y el informe gerencial, en un solo lugar.</p>
+    <div class="periodo">Cierre:
+      <select id="mes"></select>
+      <input id="anio" type="number" min="2020" max="2100">
+      <span style="opacity:.75;font-weight:500">· Nacional Seguros Vida y Salud S.A.</span>
+    </div>
+  </div>
+</section>
+
+<main>
+  <nav class="card tabs" id="tabs">
+    <button class="tab on" data-step="1"><i>1</i><div><b>Consolidar bases</b><span>5 sistemas → Excel BASE</span></div></button>
+    <button class="tab" data-step="2"><i>2</i><div><b>Conciliación</b><span>Envío y respuesta de Contabilidad</span></div></button>
+    <button class="tab" data-step="3"><i>3</i><div><b>APS y Dashboard</b><span>Anexo E · PDF · PowerPoint</span></div></button>
+  </nav>
+
+  <!-- ================= PASO 1 ================= -->
+  <section class="card panel step on" id="step1">
+    <div class="section-title"><h2>Carga de <em>bases</em></h2><small>.xlsx · .xls · .csv — clic o arrastrar</small></div>
+    <p class="help">Sube el archivo descargado de cada sistema, tal cual sale. La app quita títulos, totales y pies de página, homologa las columnas y los ramos, y convierte <b>PREPAGA</b> de dólares a bolivianos (× 6,86).</p>
+    <div class="grid" id="slots"></div>
+    <div class="actions">
+      <button class="btn primary" id="btnCons" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
+        Generar consolidado (Excel)
+      </button>
+      <button class="btn" id="btnReset1">Limpiar</button>
+      <div class="counter" id="counter1"></div>
+    </div>
+    <div class="progress" id="prog1"><div></div></div>
+    <div class="msg" id="msg1"></div>
+    <div id="res1" class="hidden">
+      <div class="tablewrap"><table id="tblCons"></table></div>
+      <div class="note"><span>✍️</span><div><b>Siguiente paso:</b> si hay ajustes manuales (reclasificaciones de mora), hazlos en el Excel descargado. Después, en el <b>paso 3</b>, sube ese Excel ya ajustado para generar el Anexo E y el dashboard.</div></div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 2 ================= -->
+  <section class="card panel step" id="step2">
+    <div class="section-title"><h2>Conciliación de <em>Primas por Cobrar</em></h2></div>
+    <p class="help">Calcula el <b>Saldo Técnico</b> por ramo contable (VI, VG, DEF, SL, DH, AP, SL-PRE, INMOTION) a partir del consolidado. Ese saldo se separa por fuente (ELIFE/ESALUD, BEC, BNB, Banco Ganadero, Masivos) y por regional. Contabilidad completa la fila <b>"Saldo Final (Contable)"</b> y la app calcula las diferencias.</p>
+
+    <div class="sub-h"><span class="num">A</span>Origen del saldo técnico</div>
+    <p class="help" id="concOrigen">Usa el consolidado del paso 1, o sube aquí el Excel consolidado (BASE).</p>
+    <div class="grid"><label class="slot" id="slotConsC"><div class="ico">⬆</div><div class="meta"><div class="k">Consolidado</div><div class="t">Excel BASE (opcional si hiciste el paso 1)</div><div class="f">Seleccionar archivo</div></div><input type="file" accept=".xlsx,.xls"></label></div>
+    <div class="actions">
+      <button class="btn primary" id="btnConc" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
+        Descargar archivo para Contabilidad
+      </button>
+    </div>
+    <div class="progress" id="prog2"><div></div></div>
+    <div class="msg" id="msg2"></div>
+    <div class="tablewrap hidden" id="wrapTec"><table id="tblTec"></table></div>
+
+    <div class="sub-h"><span class="num">B</span>Respuesta de Contabilidad</div>
+    <p class="help">Sube el archivo que devolvió Contabilidad. La app lee la hoja <b>PrimaXcobrar</b>, fila <b>"Saldo Final (Contable)"</b>. Funciona con el archivo de esta app y con el formato anterior.</p>
+    <div class="grid"><label class="slot" id="slotResp"><div class="ico">⬆</div><div class="meta"><div class="k">Contabilidad</div><div class="t">Archivo de respuesta</div><div class="f">Seleccionar archivo</div></div><input type="file" accept=".xlsx,.xls"></label></div>
+    <div class="msg" id="msg2b"></div>
+    <div id="resConc" class="hidden">
+      <div class="tablewrap"><table id="tblDif"></table></div>
+      <div class="actions"><button class="btn orange" id="btnConcDif">Descargar conciliación con diferencias</button></div>
+    </div>
+  </section>
+
+  <!-- ================= PASO 3 ================= -->
+  <section class="card panel step" id="step3">
+    <div id="s3-carga">
+      <div class="section-title"><h2>Reporte <em>APS</em> y Dashboard gerencial</h2></div>
+      <p class="help">Sube el <b>consolidado final ya ajustado</b> (el Excel del paso 1 después de los ajustes manuales). Con ese archivo se generan el <b>Anexo E</b> en formato APS y el informe ejecutivo, que se puede descargar en <b>PDF</b> o <b>PowerPoint</b>.</p>
+      <div class="grid"><label class="slot" id="slotFinal"><div class="ico">⬆</div><div class="meta"><div class="k">Consolidado final</div><div class="t">Reporte Primas por Cobrar y Reservas (ajustado)</div><div class="f">Seleccionar archivo</div></div><input type="file" accept=".xlsx,.xls"></label></div>
+      <div class="progress" id="prog3"><div></div></div>
+      <div class="msg" id="msg3"></div>
+      <div class="actions no-print hidden" id="act3">
+        <button class="btn primary" id="btnAnexo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
+          Anexo E (APS) · Excel
+        </button>
+        <button class="btn orange" id="btnPptx">PowerPoint</button>
+        <button class="btn" id="btnPdf">PDF</button>
+      </div>
+    </div>
+    <div id="dash" class="hidden"></div>
+  </section>
+</main>
+
+<footer><b>Nacional Seguros</b> · Área Cobranzas · Herramienta interna · 🔒 Los archivos se procesan en esta computadora: no se suben a ningún servidor.</footer>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const Core = window.Core;
+  const LOGO = "{{LOGO}}";
+  const EMPRESA = { nombre: "Nacional Seguros Vida y Salud", corto: "NSVS", razonSocial: "NACIONAL VIDA SEGUROS DE PERSONAS S.A." };
+
+  /* ---------- Período ---------- */
+  const hoy = new Date(); const prev = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  $("mes").innerHTML = Core.MESES.map((m, i) => `<option value="${i}">${m}</option>`).join("");
+  $("mes").value = prev.getMonth(); $("anio").value = prev.getFullYear();
+  const periodo = () => ({ mes: +$("mes").value, anio: +$("anio").value });
+  const MES = () => Core.MESES[periodo().mes].toUpperCase();
+
+  /* ---------- Worker (procesa sin congelar la pantalla) ---------- */
+  const workerSrc = $("lib-xlsx").textContent + "\n" + $("lib-core").textContent + "\n(" + function () {
+    const st = { sist: {}, cons: null, final: null };
+    const buf = (wb) => XLSX.write(wb, { type: "array", bookType: "xlsx", compression: true });
+    self.onmessage = (e) => {
+      const m = e.data;
+      try {
+        if (m.cmd === "sistema") {
+          const r = Core.procesarSistema(m.sistema, Core.readWorkbook(new Uint8Array(m.buf)));
+          st.sist[m.sistema] = r;
+          const t = r.rows.reduce((s, x) => s + (typeof x[9] === "number" ? x[9] : 0), 0);
+          postMessage({ id: m.id, ok: true, filas: r.rows.length, pxc: t, avisos: r.avisos });
+        } else if (m.cmd === "quitar") {
+          delete st.sist[m.sistema]; postMessage({ id: m.id, ok: true });
+        } else if (m.cmd === "consolidar") {
+          const cons = Core.consolidar(st.sist);
+          st.cons = cons.rows;
+          const out = buf(Core.libroConsolidado(cons));
+          postMessage({ id: m.id, ok: true, resumen: cons.resumen, totales: cons.totales, buf: out }, [out.buffer || out]);
+        } else if (m.cmd === "cargarCons") {
+          st.cons = Core.leerConsolidadoFinal(Core.readWorkbook(new Uint8Array(m.buf)));
+          postMessage({ id: m.id, ok: true, filas: st.cons.length });
+        } else if (m.cmd === "conciliacion") {
+          const rows = st.cons || st.final; if (!rows) throw new Error("Primero genera el consolidado (paso 1) o súbelo aquí.");
+          const conc = Core.calcularConciliacion(rows);
+          const out = buf(Core.libroConciliacion(conc, m.periodo, m.contable || null));
+          postMessage({ id: m.id, ok: true, tecnico: conc.tecnico, resumen: conc.resumen, buf: out }, [out.buffer || out]);
+        } else if (m.cmd === "respuesta") {
+          const r = Core.leerRespuestaContabilidad(Core.readWorkbook(new Uint8Array(m.buf)));
+          postMessage({ id: m.id, ok: true, ...r });
+        } else if (m.cmd === "final") {
+          st.final = Core.leerConsolidadoFinal(Core.readWorkbook(new Uint8Array(m.buf)));
+          postMessage({ id: m.id, ok: true, analisis: Core.analizar(st.final), anexo: Core.anexoPorRamo(st.final) });
+        } else if (m.cmd === "anexo") {
+          const out = buf(Core.libroAnexoE(st.final, m.periodo, m.empresa));
+          postMessage({ id: m.id, ok: true, buf: out }, [out.buffer || out]);
+        }
+      } catch (err) { postMessage({ id: m.id, ok: false, error: err.message || String(err) }); }
+    };
+  } + ")();";
+  const worker = new Worker(URL.createObjectURL(new Blob([workerSrc], { type: "text/javascript" })));
+  let seq = 0; const pend = new Map();
+  worker.onmessage = (e) => { const p = pend.get(e.data.id); if (!p) return; pend.delete(e.data.id); e.data.ok ? p.res(e.data) : p.rej(new Error(e.data.error)); };
+  worker.onerror = (e) => { for (const p of pend.values()) p.rej(new Error("La computadora se quedó sin memoria o el archivo no se pudo leer.")); pend.clear(); };
+  const call = (msg, transfer) => new Promise((res, rej) => { const id = ++seq; pend.set(id, { res, rej }); worker.postMessage({ ...msg, id }, transfer || []); });
+
+  /* ---------- Utilidades de interfaz ---------- */
+  const fmt = (n, d = 2) => (n ?? 0).toLocaleString("es-BO", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const MM = (n) => (n / 1e6).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " MM Bs.";
+  const MMn = (n) => (n / 1e6).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const MMh = (n) => `${MMn(n)}<small> MM Bs.</small>`;
+  const pct = (a, b) => (b ? (a / b) * 100 : 0).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const descargar = (u8, nombre, tipo) => {
+    const blob = new Blob([u8], { type: tipo || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  };
+  const busy = (n, on) => { $("prog" + n).style.display = on ? "block" : "none"; };
+  const msg = (id, text, cls) => { $(id).className = "msg" + (cls ? " " + cls : ""); $(id).textContent = text; };
+  const ICON_UP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M12 18v-6m0 0-2.5 2.5M12 12l2.5 2.5"/></svg>`;
+  const ICON_OK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>`;
+  const ICON_X = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
+  function setSlot(el, estado, texto) {
+    el.className = "slot" + (estado ? " " + estado : "");
+    el.querySelector(".ico").innerHTML = estado === "busy" ? '<div class="spin"></div>' : estado === "loaded" ? ICON_OK : estado === "error" ? ICON_X : ICON_UP;
+    el.querySelector(".f").textContent = texto;
+  }
+  function wireSlot(el, onFile) {
+    const inp = el.querySelector("input");
+    inp.addEventListener("change", () => { if (inp.files[0]) onFile(inp.files[0]); inp.value = ""; });
+    el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("drag"); });
+    el.addEventListener("dragleave", () => el.classList.remove("drag"));
+    el.addEventListener("drop", (e) => { e.preventDefault(); el.classList.remove("drag"); if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]); });
+    setSlot(el, "", "Seleccionar archivo");
+  }
+
+  /* ---------- Pestañas ---------- */
+  const done = new Set();
+  function goStep(n) {
+    document.querySelectorAll(".tab").forEach((t) => {
+      const s = +t.dataset.step; t.className = "tab" + (s === n ? " on" : done.has(s) ? " done" : "");
+    });
+    document.querySelectorAll(".step").forEach((s) => s.classList.toggle("on", s.id === "step" + n));
+  }
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => goStep(+t.dataset.step)));
+
+  /* ================= PASO 1 ================= */
+  const cargados = {};
+  $("slots").innerHTML = Core.SISTEMAS.map((s, i) => `
+    <label class="slot" data-sis="${s.id}"><div class="ico"></div>
+      <div class="meta"><div class="k">Sistema ${i + 1} · ${s.id}</div><div class="t">${esc(s.titulo)}</div><div class="f"></div></div>
+      <input type="file" accept=".xlsx,.xls,.csv"></label>`).join("");
+  document.querySelectorAll("#slots .slot").forEach((el) => {
+    const sis = el.dataset.sis;
+    wireSlot(el, async (file) => {
+      setSlot(el, "busy", `Leyendo ${file.name}… ${file.size > 5e6 ? "(archivo grande, puede tardar unos segundos)" : ""}`);
+      delete cargados[sis]; refresh1();
+      try {
+        const buf = await file.arrayBuffer();
+        const r = await call({ cmd: "sistema", sistema: sis, buf }, [buf]);
+        cargados[sis] = { name: file.name, ...r };
+        setSlot(el, "loaded", `${file.name} · ${fmt(r.filas, 0)} registros · PxC ${fmt(r.pxc)}`);
+      } catch (err) { setSlot(el, "error", err.message); }
+      refresh1();
+    });
+  });
+  function refresh1() {
+    const n = Object.keys(cargados).length;
+    $("counter1").innerHTML = `<b>${n}</b> de 5 sistemas cargados`;
+    $("btnCons").disabled = n === 0;
+  }
+  refresh1();
+  $("btnCons").addEventListener("click", async () => {
+    const falt = Core.SISTEMAS.filter((s) => !cargados[s.id]).map((s) => s.id);
+    if (falt.length && !confirm(`Faltan: ${falt.join(", ")}.\n¿Generar el consolidado igualmente?`)) return;
+    $("btnCons").disabled = true; busy(1, true); msg("msg1", "Consolidando y armando el Excel… (unos segundos)");
+    try {
+      const r = await call({ cmd: "consolidar" });
+      const nombre = `01. APS REPORTE DE PRIMAS POR COBRAR Y RESERVAS CIERRE ${EMPRESA.corto} ${MES()} ${periodo().anio} MN.xlsx`;
+      descargar(r.buf, nombre);
+      const filas = r.resumen.map((x) => `<tr><td>${esc(x.sistema)}</td><td class="n">${fmt(x.filas, 0)}</td><td class="n">${fmt(x.primaTotal)}</td><td class="n">${fmt(x.pxc)}</td><td class="n">${fmt(x.totalMora)}</td><td class="n">${fmt(x.reserva)}</td></tr>`).join("");
+      const t = r.totales, nt = r.resumen.reduce((s, x) => s + x.filas, 0);
+      $("tblCons").innerHTML = `<tr><th>Sistema</th><th class="n">Registros</th><th class="n">Prima Total</th><th class="n">Prima por Cobrar</th><th class="n">Total Mora</th><th class="n">Reserva</th></tr>${filas}
+        <tr class="tot"><td>TOTAL</td><td class="n">${fmt(nt, 0)}</td><td class="n">${fmt(t.primaTotal)}</td><td class="n">${fmt(t.pxc)}</td><td class="n">${fmt(t.totalMora)}</td><td class="n">${fmt(t.reserva)}</td></tr>`;
+      $("res1").classList.remove("hidden");
+      msg("msg1", `✔ Se descargó «${nombre}»`, "ok");
+      done.add(1); goStep(1);
+      $("concOrigen").innerHTML = "✔ Se usará el consolidado generado en el paso 1. También puedes subir otro Excel consolidado.";
+      $("btnConc").disabled = false;
+    } catch (err) { msg("msg1", "No se pudo consolidar: " + err.message, "err"); }
+    busy(1, false); refresh1();
+  });
+  $("btnReset1").addEventListener("click", async () => {
+    for (const s of Object.keys(cargados)) { await call({ cmd: "quitar", sistema: s }); delete cargados[s]; }
+    document.querySelectorAll("#slots .slot").forEach((el) => setSlot(el, "", "Seleccionar archivo"));
+    $("res1").classList.add("hidden"); msg("msg1", ""); refresh1();
+  });
+
+  /* ================= PASO 2 ================= */
+  let tecnico = null, contable = null;
+  wireSlot($("slotConsC"), async (file) => {
+    setSlot($("slotConsC"), "busy", `Leyendo ${file.name}…`);
+    try {
+      const buf = await file.arrayBuffer();
+      const r = await call({ cmd: "cargarCons", buf }, [buf]);
+      setSlot($("slotConsC"), "loaded", `${file.name} · ${fmt(r.filas, 0)} registros`);
+      $("btnConc").disabled = false;
+    } catch (err) { setSlot($("slotConsC"), "error", err.message); }
+  });
+  async function generarConc(conContable) {
+    busy(2, true); msg("msg2", "Calculando saldo técnico…");
+    try {
+      const r = await call({ cmd: "conciliacion", periodo: periodo(), contable: conContable ? contable : null });
+      tecnico = r.tecnico;
+      const nombre = conContable
+        ? `9.2 Conciliacion Primaxcobrar - Diferencias Cierre ${MES()} ${periodo().anio}.xlsx`
+        : `9.2 Conciliacion Primaxcobrar - Conciliacion Cierre ${MES()} ${periodo().anio}.xlsx`;
+      descargar(r.buf, nombre);
+      msg("msg2", `✔ Se descargó «${nombre}»`, "ok");
+      const tot = Core.CONC_COLS.reduce((s, c) => s + tecnico[c], 0);
+      $("tblTec").innerHTML = `<tr><th>Saldo técnico</th>${Core.CONC_COLS.map((c) => `<th class="n">${esc(c === "VIDA INDIVIDUAL CORTO PLAZO" ? "VI CORTO PLAZO" : c)}</th>`).join("")}<th class="n">Total</th></tr>
+        <tr class="tot"><td>Sistemas</td>${Core.CONC_COLS.map((c) => `<td class="n">${fmt(tecnico[c])}</td>`).join("")}<td class="n">${fmt(tot)}</td></tr>`;
+      $("wrapTec").classList.remove("hidden");
+      if (contable) pintarDif();
+    } catch (err) { msg("msg2", err.message, "err"); }
+    busy(2, false);
+  }
+  $("btnConc").addEventListener("click", () => generarConc(false));
+  wireSlot($("slotResp"), async (file) => {
+    setSlot($("slotResp"), "busy", `Leyendo ${file.name}… (archivos grandes pueden tardar)`);
+    try {
+      const buf = await file.arrayBuffer();
+      const r = await call({ cmd: "respuesta", buf }, [buf]);
+      contable = r.contable;
+      if (!tecnico) tecnico = Object.fromEntries(Core.CONC_COLS.map((c) => [c, r.tecnicoArchivo[c] ?? 0]));
+      setSlot($("slotResp"), "loaded", `${file.name} · ${r.completos} saldos contables leídos`);
+      pintarDif();
+    } catch (err) { setSlot($("slotResp"), "error", err.message); }
+  });
+  function pintarDif() {
+    let tt = 0, tc = 0;
+    const filas = Core.CONC_COLS.map((c) => {
+      const t = tecnico[c] ?? 0, k = contable[c];
+      tt += t; if (typeof k === "number") tc += k;
+      const d = typeof k === "number" ? k - t : null;
+      const est = d === null ? '<span class="pill wait">Sin saldo contable</span>' : Math.abs(d) <= 1 ? '<span class="pill ok">Ok</span>' : '<span class="pill bad">Revisar</span>';
+      return `<tr><td>${esc(c)}</td><td class="n">${fmt(t)}</td><td class="n">${typeof k === "number" ? fmt(k) : "—"}</td><td class="n">${d === null ? "—" : fmt(d)}</td><td>${est}</td></tr>`;
+    }).join("");
+    $("tblDif").innerHTML = `<tr><th>Ramo contable</th><th class="n">Saldo técnico</th><th class="n">Saldo contable</th><th class="n">Diferencia</th><th>Estado</th></tr>${filas}
+      <tr class="tot"><td>TOTAL</td><td class="n">${fmt(tt)}</td><td class="n">${fmt(tc)}</td><td class="n">${fmt(tc - tt)}</td><td></td></tr>`;
+    $("resConc").classList.remove("hidden");
+    msg("msg2b", "Diferencias calculadas como Saldo contable − Saldo técnico. «Revisar» = diferencia mayor a 1 Bs.", "");
+    done.add(2);
+  }
+  $("btnConcDif").addEventListener("click", () => generarConc(true));
+
+  /* ================= PASO 3 ================= */
+  let A = null, charts = [];
+  wireSlot($("slotFinal"), async (file) => {
+    setSlot($("slotFinal"), "busy", `Leyendo ${file.name}… (archivo grande, puede tardar unos segundos)`);
+    busy(3, true); msg("msg3", "Analizando la cartera…");
+    try {
+      const buf = await file.arrayBuffer();
+      const r = await call({ cmd: "final", buf }, [buf]);
+      A = r.analisis;
+      setSlot($("slotFinal"), "loaded", `${file.name} · ${fmt(A.registros, 0)} registros`);
+      msg("msg3", "");
+      $("act3").classList.remove("hidden");
+      pintarDashboard();
+      done.add(3); goStep(3);
+      $("btnConc").disabled = false;
+    } catch (err) { setSlot($("slotFinal"), "error", err.message); msg("msg3", ""); }
+    busy(3, false);
+  });
+  $("btnAnexo").addEventListener("click", async () => {
+    try {
+      const r = await call({ cmd: "anexo", periodo: periodo(), empresa: EMPRESA });
+      descargar(r.buf, `02. ANEXO En Formato APS ${EMPRESA.corto} ${MES()} ${periodo().anio}.xlsx`);
+    } catch (err) { msg("msg3", err.message, "err"); }
+  });
+  $("btnPdf").addEventListener("click", () => window.print());
+  $("btnPptx").addEventListener("click", () => { try { generarPptx(); } catch (err) { msg("msg3", "No se pudo generar el PowerPoint: " + err.message, "err"); } });
+
+  /* ---------- Textos del informe ---------- */
+  const corto = (s, n = 16) => {
+    let t = String(s).toUpperCase()
+      .replace(/COOPERATIVA DE AHORRO Y CR[EÉ]DITO( ABIERTA)?/g, "COOP.").replace(/SOCIEDAD AN[OÓ]NIMA/g, "S.A.")
+      .replace(/BANCO NACIONAL DE BOLIVIA/g, "BNB").replace(/BANCO /g, "BCO. ").replace(/ASOCIACI[OÓ]N /g, "ASOC. ")
+      .replace(/MINISTERIO DE /g, "MIN. ").replace(/[“”"]/g, "").trim();
+    return t.length > n ? t.slice(0, n - 1).trim() + "…" : t;
+  };
+  function textos(A) {
+    const T = A.T, R = A.regionales, ramos = [...A.ramos].sort((a, b) => b.mora - a.mora);
+    const r0 = R[0], rm = ramos[0];
+    const regMora = [...R].sort((a, b) => b.mora - a.mora);
+    const top3 = A.topMora.slice(0, 3);
+    const m3 = top3.reduce((s, c) => s + c.mora, 0), res3 = top3.reduce((s, c) => s + c.res, 0);
+    const m90 = T.m[4], r90 = T.r[4];
+    const lectura = [
+      `Cartera consolidada: ${MM(T.pxc)} por cobrar, ${MM(T.mora)} en mora y ${MM(T.res)} en reserva.`,
+      `${r0.nombre} concentra ${pct(r0.pxc, T.pxc)} de la cartera, ${pct(r0.mora, T.mora)} de la mora y ${pct(r0.res, T.res)} de la reserva.`,
+      `El ramo ${rm.nombre} reúne ${pct(rm.mora, T.mora)} de la mora total y ${pct(rm.res, T.res)} de la reserva.`,
+      `La mora mayor a 90 días asciende a ${MM(m90)} (${pct(m90, T.mora)} de la mora), con cobertura de ${pct(r90, m90)}.`,
+      `Se consolidaron ${A.registros.toLocaleString("en-US")} registros en ${A.nPolizas.toLocaleString("en-US")} pólizas por número + contratante, sin alterar los importes totales.`,
+    ];
+    const recs = [
+      `Priorizar ${top3.map((c) => corto(c.nombre, 22)).join(", ")}: concentran ${MM(m3)} de mora (${pct(m3, T.mora)}) y ${MM(res3)} de reserva (${pct(res3, T.res)}).`,
+      `Definir plan de acción para el ramo ${rm.nombre}: mora de ${MM(rm.mora)}, equivalente al ${pct(rm.mora, rm.pxc)} de su cartera.`,
+      `Focalizar ${regMora[0].nombre} y ${regMora[1].nombre}, que explican ${pct(regMora[0].mora + regMora[1].mora, T.mora)} de la mora total.`,
+      `Revisar jurídica y contablemente la cartera mayor a 90 días; alcanza ${MM(m90)} y absorbe ${pct(r90, T.res)} de la reserva.`,
+      `Regularizar las cuentas con hasta ${A.maxMora.dias.toLocaleString("en-US")} días de mora y definir recupero, castigo o conciliación documental con responsables y fechas.`,
+      `Monitorear semanalmente el Top 10 de clientes y separar la gestión preventiva de la cartera sin mora de la gestión intensiva vencida.`,
+    ];
+    return { lectura, recs };
+  }
+
+  /* ---------- Dashboard en pantalla ---------- */
+  const TRAMOS = ["1 a 15 días", "16 a 45 días", "46 a 60 días", "61 a 90 días", "Mayor a 90 días"];
+  function pintarDashboard() {
+    charts.forEach((c) => c.destroy()); charts = [];
+    const T = A.T, P = periodo(), tx = textos(A), mx = A.maxMora;
+    const mesTxt = `${Core.MESES[P.mes].toLowerCase()} ${P.anio}`;
+    const fila5 = (r) => `<tr><td title="${esc(r.nombre)}">${esc(r.nombre)}</td><td class="n">${MMn(r.pxc)}</td><td class="n">${MMn(r.mora)}</td><td class="n">${MMn(r.res)}</td><td class="n">${pct(r.mora, r.pxc)}</td></tr>`;
+    const tablaReg = A.regionales.map(fila5).join("");
+    const tablaRamo = A.ramos.map(fila5).join("");
+    const totRow = `<tr class="tot"><td>TOTAL</td><td class="n">${MMn(T.pxc)}</td><td class="n">${MMn(T.mora)}</td><td class="n">${MMn(T.res)}</td><td class="n">${pct(T.mora, T.pxc)}</td></tr>`;
+    const topMora = A.topMora.map((c) => `<tr><td title="${esc(c.nombre)}">${esc(corto(c.nombre, 24))}</td><td>${esc(c.regional)}</td><td class="n">${MMn(c.mora)}</td><td class="n">${c.dias.toLocaleString("en-US")}</td></tr>`).join("");
+    const topRes = A.topRes.map((c) => `<tr><td title="${esc(c.nombre)}">${esc(corto(c.nombre, 24))}</td><td>${esc(c.regional)}</td><td class="n">${MMn(c.res)}</td><td class="n">${pct(c.res, c.mora)}</td></tr>`).join("");
+    const tramos = TRAMOS.map((t, i) => `<tr><td>${t}</td><td class="n">${MMn(T.m[i])}</td><td class="n">${pct(T.m[i], T.mora)}</td><td class="n">${MMn(T.r[i])}</td><td class="n">${pct(T.r[i], T.m[i])}</td></tr>`).join("");
+    const bs = (n) => (Math.abs(n) >= 1e5 ? MM(n) : "Bs " + fmt(n));
+    $("dash").innerHTML = `
+      <div class="dash-head"><div><h3>INFORME EJECUTIVO GERENCIAL – PRIMAS POR COBRAR Y RESERVAS</h3>
+        <p>${EMPRESA.nombre} · Cierre ${mesTxt} · Moneda Nacional (MM Bs.) · Consolidado por póliza + contratante · Incluye todas las regionales</p></div>
+        <img src="${LOGO}" alt="Nacional Seguros"></div>
+      <div class="kpis">
+        <div class="kpi"><div class="l">Primas por cobrar</div><div class="v">${MMh(T.pxc)}</div><div class="s">${A.nPolizas.toLocaleString("en-US")} pólizas · ${A.nClientes.toLocaleString("en-US")} clientes</div></div>
+        <div class="kpi or"><div class="l">Mora total</div><div class="v">${MMh(T.mora)}</div><div class="s">Mora vs PxC: ${pct(T.mora, T.pxc)}</div></div>
+        <div class="kpi"><div class="l">Reserva total</div><div class="v">${MMh(T.res)}</div><div class="s">Cobertura de mora: ${pct(T.res, T.mora)}</div></div>
+        <div class="kpi dark"><div class="l">Mayor mora</div><div class="v">${mx.dias.toLocaleString("en-US")}<small> días</small></div><div class="s">${esc(corto(mx.contratante, 26))}</div></div>
+        <div class="kpi or"><div class="l">Mora mayor a 90 días</div><div class="v">${MMh(T.m[4])}</div><div class="s">${pct(T.m[4], T.mora)} del total mora</div></div>
+        <div class="kpi"><div class="l">Deuda neta de impuestos</div><div class="v">${MMh(T.neto)}</div><div class="s">Impuestos y aportes: ${MM(T.imp)}</div></div>
+        <div class="kpi"><div class="l">Top 10 reserva</div><div class="v">${pct(A.paretoRes.share, 1)}</div><div class="s">Concentración de reserva</div></div>
+      </div>
+      <div class="dgrid">
+        <div class="box"><h4>Resumen por regional – todas <small>(MM Bs.)</small></h4><div class="bd"><table><tr><th>Regional</th><th class="n">PxC</th><th class="n">Mora</th><th class="n">Reserva</th><th class="n">% Mora</th></tr>${tablaReg}${totRow}</table></div></div>
+        <div class="box"><h4>Pareto clientes – Primas por cobrar</h4><div class="bd chartbox"><canvas id="chPxc"></canvas></div></div>
+        <div class="box"><h4>Pareto clientes – Reserva</h4><div class="bd chartbox"><canvas id="chRes"></canvas></div></div>
+      </div>
+      <div class="dgrid">
+        <div class="box"><h4>Mora por contratante y regional – Top 6 <small>(MM Bs.)</small></h4><div class="bd" style="overflow-x:auto"><table><tr><th>Contratante</th><th>Regional</th><th class="n">Mora</th><th class="n">Días máx.</th></tr>${topMora}</table></div></div>
+        <div class="box"><h4>Reserva por contratante y regional – Top 6 <small>(MM Bs.)</small></h4><div class="bd" style="overflow-x:auto"><table><tr><th>Contratante</th><th>Regional</th><th class="n">Reserva</th><th class="n">Cobert.</th></tr>${topRes}</table></div></div>
+        <div class="box"><h4>Cuenta con mayor días de mora</h4><div class="bd"><div class="alert"><div class="big">${mx.dias.toLocaleString("en-US")} días de mora</div>
+          <dl><dt>Cliente:</dt><dd>${esc(mx.contratante)}</dd><dt>Póliza:</dt><dd>${esc(mx.poliza)}</dd><dt>Regional / Ramo:</dt><dd>${esc(mx.regional)} / ${esc(mx.ramo)}</dd>
+          <dt>Mora / Reserva:</dt><dd>${bs(mx.mora)} / ${bs(mx.res)}</dd></dl>
+          ${A.maxMoraEmpates > 1 ? `<p style="font-size:11px;color:var(--muted);margin:8px 0 0">* El cliente registra ${A.maxMoraEmpates} pólizas con la antigüedad máxima.</p>` : ""}</div></div></div>
+      </div>
+      <div class="dgrid pb">
+        <div class="box"><h4>Mora y reserva por ramo <small>(MM Bs.)</small></h4><div class="bd"><table><tr><th>Ramo</th><th class="n">PxC</th><th class="n">Mora</th><th class="n">Reserva</th><th class="n">% Mora</th></tr>${tablaRamo}${totRow}</table></div></div>
+        <div class="box"><h4>Mora y reserva por antigüedad (tramos)</h4><div class="bd chartbox"><canvas id="chTramos"></canvas></div></div>
+        <div class="box"><h4>Pareto clientes – Mora</h4><div class="bd chartbox"><canvas id="chMora"></canvas></div></div>
+      </div>
+      <div class="dgrid">
+        <div class="box"><h4>Lectura ejecutiva</h4><div class="bd"><ul class="bul">${tx.lectura.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div></div>
+        <div class="box"><h4>Mora y reserva por tramo <small>(MM Bs.)</small></h4><div class="bd"><table><tr><th>Tramo</th><th class="n">Mora</th><th class="n">% Part.</th><th class="n">Reserva</th><th class="n">Cobert.</th></tr>${tramos}
+          <tr class="tot"><td>Total Mora</td><td class="n">${MMn(T.mora)}</td><td class="n">100.0%</td><td class="n">${MMn(T.res)}</td><td class="n">${pct(T.res, T.mora)}</td></tr></table>
+          <p style="font-size:11px;color:var(--muted);margin:8px 2px 0">* Sin mora: ${MM(T.sin)}. Top 10: PxC ${pct(A.paretoPxc.share, 1)}, mora ${pct(A.paretoMora.share, 1)}, reserva ${pct(A.paretoRes.share, 1)}.</p></div></div>
+        <div class="box"><h4>Conclusiones y recomendaciones</h4><div class="bd"><ol class="bul">${tx.recs.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></div></div>
+      </div>`;
+    $("dash").classList.remove("hidden");
+    Chart.defaults.font.family = "Montserrat, Segoe UI, sans-serif";
+    Chart.defaults.color = "#5B7194";
+    charts.push(pareto("chPxc", A.paretoPxc), pareto("chRes", A.paretoRes), pareto("chMora", A.paretoMora));
+    charts.push(new Chart($("chTramos"), {
+      type: "bar",
+      data: { labels: TRAMOS, datasets: [
+        { label: "Mora", data: T.m.map((v) => v / 1e6), backgroundColor: "#0D2350", borderRadius: 4 },
+        { label: "Reserva", data: T.r.map((v) => v / 1e6), backgroundColor: "#F36A10", borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: "top", labels: { boxWidth: 12 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw.toFixed(2)} MM Bs.` } } },
+        scales: { y: { title: { display: true, text: "MM Bs." }, grid: { color: "#EEF3FA" } }, x: { grid: { display: false } } } },
+    }));
+  }
+  function pareto(id, p) {
+    return new Chart($(id), {
+      type: "bar",
+      data: { labels: p.top.map((c) => corto(c.nombre)), datasets: [
+        { type: "bar", label: "MM Bs.", data: p.top.map((c) => c.valor / 1e6), backgroundColor: "#0D2350", borderRadius: 4, yAxisID: "y", order: 2 },
+        { type: "line", label: "% acumulado", data: p.top.map((c) => c.acum * 100), borderColor: "#F36A10", backgroundColor: "#F36A10", pointRadius: 3, tension: .25, yAxisID: "y1", order: 1 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, title: { display: true, text: `Top 10 = ${(p.share * 100).toFixed(1)}% del total`, color: "#F36A10", font: { size: 11, weight: "bold" } },
+          tooltip: { callbacks: { label: (c) => c.dataset.type === "line" ? `Acumulado: ${c.raw.toFixed(1)}%` : `${c.raw.toFixed(2)} MM Bs.` } } },
+        scales: { x: { ticks: { maxRotation: 50, minRotation: 40, font: { size: 9 }, color: "#F36A10" }, grid: { display: false } },
+          y: { title: { display: true, text: "MM Bs." }, grid: { color: "#EEF3FA" } },
+          y1: { position: "right", min: 0, max: 100, ticks: { callback: (v) => v + "%" }, grid: { display: false } } } },
+    });
+  }
+
+  /* ---------- PowerPoint ---------- */
+  function generarPptx() {
+    const T = A.T, P = periodo(), tx = textos(A), mx = A.maxMora;
+    const mesTxt = `${Core.MESES[P.mes]} ${P.anio}`;
+    const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; // 13.33 x 7.5 in
+    pptx.title = `Informe Ejecutivo Gerencial – Primas por Cobrar y Reservas ${mesTxt}`;
+    const NAVY = "0D2350", BLUE = "1565D8", OR = "F36A10", MUT = "5B7194", SOFT = "F2F8FE";
+    const FONT = "Montserrat";
+    const header = (s, titulo, etiqueta) => {
+      s.background = { color: "FFFFFF" };
+      s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 0.9, fill: { color: NAVY } });
+      s.addText(titulo, { x: 0.45, y: 0.12, w: 10.5, h: 0.45, fontFace: FONT, fontSize: 20, bold: true, color: "FFFFFF" });
+      s.addText(`${EMPRESA.nombre} · Cierre ${mesTxt} · Cifras en MM Bs.`, { x: 0.45, y: 0.52, w: 10.5, h: 0.3, fontFace: FONT, fontSize: 10.5, color: "C9D8F0" });
+      s.addShape(pptx.ShapeType.roundRect, { x: 11.05, y: 0.16, w: 1.95, h: 0.58, fill: { color: "FFFFFF" }, rectRadius: 0.08 });
+      s.addImage({ data: LOGO, x: 11.15, y: 0.21, w: 1.75, h: 0.49 });
+      if (etiqueta) {
+        s.addShape(pptx.ShapeType.rect, { x: 0.45, y: 1.12, w: 0.35, h: 0.05, fill: { color: OR } });
+        s.addText(etiqueta.toUpperCase(), { x: 0.88, y: 1.0, w: 8, h: 0.3, fontFace: FONT, fontSize: 10, bold: true, color: OR, charSpacing: 3 });
+      }
+      s.addText(`Área Cobranzas · ${EMPRESA.nombre}`, { x: 0.45, y: 7.1, w: 8, h: 0.25, fontFace: FONT, fontSize: 8, color: MUT });
+    };
+    const tabla = (s, head, rows, opt) => {
+      const H = head.map((t, i) => ({ text: t, options: { bold: true, color: "FFFFFF", fill: { color: NAVY }, align: i ? "right" : "left" } }));
+      const B = rows.map((r, k) => r.map((t, i) => ({ text: String(t), options: { align: i && opt.numFrom <= i ? "right" : "left", fill: { color: r.tot ? "DBE8F7" : k % 2 ? "FAFCFF" : "FFFFFF" }, bold: !!r.tot } })));
+      s.addTable([H, ...B], { x: opt.x, y: opt.y, w: opt.w, colW: opt.colW, fontFace: FONT, fontSize: opt.fs || 10, color: NAVY, border: { type: "solid", pt: 0.5, color: "DBE8F7" }, rowH: opt.rowH || 0.3, autoPage: false });
+    };
+    const tot = (arr) => { arr.tot = true; return arr; };
+    const m2 = (v) => (v / 1e6).toFixed(2);
+
+    // 1. Portada
+    let s = pptx.addSlide();
+    s.background = { color: NAVY };
+    s.addShape(pptx.ShapeType.rect, { x: 0, y: 5.6, w: 13.33, h: 1.9, fill: { color: "0B4FC0", transparency: 30 } });
+    s.addShape(pptx.ShapeType.roundRect, { x: 0.7, y: 0.6, w: 3.0, h: 0.95, fill: { color: "FFFFFF" }, rectRadius: 0.1 });
+    s.addImage({ data: LOGO, x: 0.85, y: 0.7, w: 2.7, h: 0.76 });
+    s.addShape(pptx.ShapeType.rect, { x: 0.7, y: 2.45, w: 0.5, h: 0.06, fill: { color: OR } });
+    s.addText("ÁREA COBRANZAS", { x: 1.3, y: 2.3, w: 6, h: 0.35, fontFace: FONT, fontSize: 13, bold: true, color: "FFA23F", charSpacing: 4 });
+    s.addText([{ text: "Informe Ejecutivo Gerencial\n", options: { color: "FFFFFF" } }, { text: "Primas por Cobrar y Reservas", options: { color: "4AA0F7" } }],
+      { x: 0.7, y: 2.75, w: 11.5, h: 1.6, fontFace: FONT, fontSize: 38, bold: true, valign: "top" });
+    s.addText(`${EMPRESA.nombre} · Cierre ${mesTxt} · Moneda Nacional (MM Bs.)`, { x: 0.7, y: 4.5, w: 11.5, h: 0.4, fontFace: FONT, fontSize: 15, color: "C9D8F0" });
+
+    // 2. Indicadores + lectura
+    s = pptx.addSlide(); header(s, "Indicadores clave", "Resumen ejecutivo");
+    const kp = [
+      ["PRIMAS POR COBRAR", MM(T.pxc), `${A.nPolizas.toLocaleString("en-US")} pólizas | ${A.nClientes.toLocaleString("en-US")} clientes`, BLUE],
+      ["MORA TOTAL", MM(T.mora), `Mora vs PxC: ${pct(T.mora, T.pxc)}`, OR],
+      ["RESERVA TOTAL", MM(T.res), `Cobertura de mora: ${pct(T.res, T.mora)}`, BLUE],
+      ["MAYOR MORA", `${mx.dias.toLocaleString("en-US")} días`, corto(mx.contratante, 28), OR],
+      ["MORA > 90 DÍAS", MM(T.m[4]), `${pct(T.m[4], T.mora)} del total mora`, OR],
+      ["DEUDA NETA DE IMPUESTOS", MM(T.neto), `Impuestos y aportes: ${MM(T.imp)}`, BLUE],
+      ["TOP 10 RESERVA", pct(A.paretoRes.share, 1), "Concentración de reserva", BLUE],
+    ];
+    kp.forEach((k, i) => {
+      const x = 0.45 + (i % 4) * 3.12, y = 1.45 + Math.floor(i / 4) * 1.45;
+      s.addShape(pptx.ShapeType.rect, { x, y, w: 2.95, h: 1.28, fill: { color: SOFT }, line: { color: "DBE8F7" } });
+      s.addShape(pptx.ShapeType.rect, { x, y, w: 2.95, h: 0.07, fill: { color: k[3] } });
+      s.addText(k[0], { x: x + 0.15, y: y + 0.15, w: 2.7, h: 0.25, fontFace: FONT, fontSize: 8.5, bold: true, color: MUT });
+      s.addText(k[1], { x: x + 0.15, y: y + 0.42, w: 2.7, h: 0.45, fontFace: FONT, fontSize: 19, bold: true, color: NAVY });
+      s.addText(k[2], { x: x + 0.15, y: y + 0.9, w: 2.7, h: 0.28, fontFace: FONT, fontSize: 8.5, color: MUT });
+    });
+    s.addText("LECTURA EJECUTIVA", { x: 0.45, y: 4.5, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, bold: true, color: NAVY });
+    s.addText(tx.lectura.map((t) => ({ text: t, options: { bullet: { code: "25CF" }, breakLine: true } })), { x: 0.45, y: 4.85, w: 12.4, h: 2.15, fontFace: FONT, fontSize: 11, color: NAVY, valign: "top", paraSpaceAfter: 5 });
+
+    // 3. Regional + ramo
+    s = pptx.addSlide(); header(s, "Cartera por regional y por ramo", "Todas las regionales");
+    tabla(s, ["Regional", "PxC", "Mora", "Reserva", "% Mora"], A.regionales.map((r) => [r.nombre, m2(r.pxc), m2(r.mora), m2(r.res), pct(r.mora, r.pxc)]).concat([tot(["TOTAL", m2(T.pxc), m2(T.mora), m2(T.res), pct(T.mora, T.pxc)])]),
+      { x: 0.45, y: 1.45, w: 6.1, colW: [1.9, 1.1, 1.1, 1.1, 0.9], numFrom: 1, rowH: 0.42 });
+    tabla(s, ["Ramo", "PxC", "Mora", "Reserva", "% Mora"], A.ramos.map((r) => [r.nombre, m2(r.pxc), m2(r.mora), m2(r.res), pct(r.mora, r.pxc)]).concat([tot(["TOTAL", m2(T.pxc), m2(T.mora), m2(T.res), pct(T.mora, T.pxc)])]),
+      { x: 6.8, y: 1.45, w: 6.1, colW: [1.9, 1.1, 1.1, 1.1, 0.9], numFrom: 1, rowH: 0.42 });
+    s.addText("Cifras en MM Bs.", { x: 0.45, y: 6.75, w: 4, h: 0.25, fontFace: FONT, fontSize: 8, italic: true, color: MUT });
+
+    // 4-6. Paretos
+    const paretoSlide = (p, titulo, etiqueta) => {
+      const sl = pptx.addSlide(); header(sl, titulo, etiqueta);
+      const labels = p.top.map((c) => corto(c.nombre, 18));
+      sl.addChart([
+        { type: pptx.ChartType.bar, data: [{ name: "MM Bs.", labels, values: p.top.map((c) => +(c.valor / 1e6).toFixed(2)) }], options: { chartColors: [NAVY], barGapWidthPct: 60, showValue: true, dataLabelFontSize: 9, dataLabelColor: NAVY, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.00" } },
+        { type: pptx.ChartType.line, data: [{ name: "% acumulado", labels, values: p.top.map((c) => +(c.acum * 100).toFixed(1)) }], options: { chartColors: [OR], lineSize: 2, lineDataSymbolSize: 7, secondaryValAxis: true, secondaryCatAxis: true } },
+      ], { x: 0.45, y: 1.4, w: 12.4, h: 5.3, fontFace: FONT, catAxisLabelFontSize: 9, catAxisLabelRotate: -35, valAxisLabelFontSize: 9, showLegend: true, legendPos: "t", legendFontSize: 10,
+        valAxes: [{ showValAxisTitle: true, valAxisTitle: "MM Bs.", valAxisTitleFontSize: 9 }, { showValAxisTitle: true, valAxisTitle: "% acumulado", valAxisTitleFontSize: 9, valAxisMaxVal: 100, valAxisMinVal: 0 }],
+        catAxes: [{ catAxisTitle: "" }, { catAxisHidden: true }] });
+      sl.addText(`Top 10 = ${(p.share * 100).toFixed(1)}% del total`, { x: 9.2, y: 1.0, w: 3.7, h: 0.3, fontFace: FONT, fontSize: 11, bold: true, color: OR, align: "right" });
+    };
+    paretoSlide(A.paretoPxc, "Pareto de clientes – Primas por cobrar", "Concentración de cartera");
+    paretoSlide(A.paretoRes, "Pareto de clientes – Reserva", "Concentración de reserva");
+    paretoSlide(A.paretoMora, "Pareto de clientes – Mora", "Concentración de mora");
+
+    // 7. Top 6 + cuenta mayor mora
+    s = pptx.addSlide(); header(s, "Mora y reserva por contratante y regional", "Top 6");
+    tabla(s, ["Contratante", "Regional", "PxC", "Mora", "Días máx."], A.topMora.map((c) => [corto(c.nombre, 38), c.regional, m2(c.pxc), m2(c.mora), c.dias.toLocaleString("en-US")]),
+      { x: 0.45, y: 1.45, w: 8.2, colW: [3.6, 1.4, 1.1, 1.1, 1.0], numFrom: 2, fs: 9.5, rowH: 0.36 });
+    tabla(s, ["Contratante", "Regional", "Reserva", "Mora", "Cobertura"], A.topRes.map((c) => [corto(c.nombre, 38), c.regional, m2(c.res), m2(c.mora), pct(c.res, c.mora)]),
+      { x: 0.45, y: 4.3, w: 8.2, colW: [3.6, 1.4, 1.1, 1.1, 1.0], numFrom: 2, fs: 9.5, rowH: 0.36 });
+    s.addShape(pptx.ShapeType.roundRect, { x: 8.95, y: 1.45, w: 3.95, h: 5.3, fill: { color: "FFF6EE" }, line: { color: OR, width: 2 }, rectRadius: 0.1 });
+    s.addText("CUENTA CON MAYOR DÍAS DE MORA", { x: 9.1, y: 1.6, w: 3.65, h: 0.3, fontFace: FONT, fontSize: 10, bold: true, color: NAVY, align: "center" });
+    s.addText(`${mx.dias.toLocaleString("en-US")} días`, { x: 9.1, y: 2.0, w: 3.65, h: 0.7, fontFace: FONT, fontSize: 32, bold: true, color: OR, align: "center" });
+    s.addText([
+      { text: "Cliente: ", options: { bold: true } }, { text: mx.contratante, options: { breakLine: true } },
+      { text: "Póliza: ", options: { bold: true } }, { text: mx.poliza, options: { breakLine: true } },
+      { text: "Regional / Ramo: ", options: { bold: true } }, { text: `${mx.regional} / ${mx.ramo}`, options: { breakLine: true } },
+      { text: "Mora / Reserva: ", options: { bold: true } }, { text: `${Math.abs(mx.mora) >= 1e5 ? MM(mx.mora) : "Bs " + fmt(mx.mora)} / ${Math.abs(mx.res) >= 1e5 ? MM(mx.res) : "Bs " + fmt(mx.res)}` },
+    ], { x: 9.15, y: 2.85, w: 3.6, h: 3.6, fontFace: FONT, fontSize: 11, color: NAVY, valign: "top", paraSpaceAfter: 8 });
+
+    // 8. Tramos
+    s = pptx.addSlide(); header(s, "Mora y reserva por antigüedad", "Tramos de mora");
+    s.addChart(pptx.ChartType.bar, [
+      { name: "Mora", labels: TRAMOS, values: T.m.map((v) => +(v / 1e6).toFixed(2)) },
+      { name: "Reserva", labels: TRAMOS, values: T.r.map((v) => +(v / 1e6).toFixed(2)) }],
+      { x: 0.45, y: 1.4, w: 7.2, h: 5.3, chartColors: [NAVY, OR], barGapWidthPct: 50, showValue: true, dataLabelFontSize: 9, dataLabelFormatCode: "0.00", showLegend: true, legendPos: "t", fontFace: FONT, catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, showValAxisTitle: true, valAxisTitle: "MM Bs." });
+    tabla(s, ["Tramo", "Mora", "% Part.", "Reserva", "Cobertura"], TRAMOS.map((t, i) => [t, m2(T.m[i]), pct(T.m[i], T.mora), m2(T.r[i]), pct(T.r[i], T.m[i])]).concat([tot(["Total Mora", m2(T.mora), "100.0%", m2(T.res), pct(T.res, T.mora)])]),
+      { x: 7.9, y: 1.6, w: 5.0, colW: [1.5, 0.9, 0.85, 0.9, 0.85], numFrom: 1, fs: 9.5, rowH: 0.42 });
+    s.addText(`Sin mora: ${MM(T.sin)}.`, { x: 7.9, y: 4.9, w: 5, h: 0.3, fontFace: FONT, fontSize: 9, italic: true, color: MUT });
+
+    // 9. Conclusiones
+    s = pptx.addSlide(); header(s, "Conclusiones y recomendaciones gerenciales", "Plan de acción");
+    s.addText(tx.recs.map((t) => ({ text: t, options: { bullet: { type: "number" }, breakLine: true } })), { x: 0.6, y: 1.5, w: 12.1, h: 5.4, fontFace: FONT, fontSize: 14, color: NAVY, valign: "top", paraSpaceAfter: 12 });
+
+    return pptx.writeFile({ fileName: `Informe Ejecutivo Gerencial Primas y Reservas ${EMPRESA.corto} ${mesTxt}.pptx` });
+  }
+})();
+</script>
+</body>
+</html>

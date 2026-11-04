@@ -1,0 +1,7 @@
+# Nunca versionar datos reales
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.pptx
+datos/
