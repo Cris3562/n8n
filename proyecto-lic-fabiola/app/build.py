@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Arma la app en un solo archivo HTML (funciona sin internet).
-Uso: python3 build.py  ->  dist/Unificacion_Bases_NSVS.html
+Uso: python3 build.py  ->  dist/Cierre_Reservas_PxC.html
 """
 import base64, pathlib
 R = pathlib.Path(__file__).parent
@@ -19,7 +19,7 @@ fuentes = "".join(
     for w in (400, 500, 600, 700, 800))
 assert "/*FONTS*/" in html
 html = html.replace("/*FONTS*/", fuentes, 1)
-out = R / "dist/Unificacion_Bases_NSVS.html"
+out = R / "dist/Cierre_Reservas_PxC.html"
 out.parent.mkdir(exist_ok=True)
 out.write_text(html, encoding="utf-8")
 print(out, round(out.stat().st_size / 1e6, 2), "MB")

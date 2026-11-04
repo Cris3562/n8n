@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Unificación de Bases · Cobranzas NSVS</title>
+<title>Cierre de Reservas y PxC · Cobranzas</title>
 <style>/*FONTS*/</style>
 <script id="lib-xlsx">/*LIB_XLSX*/</script>
 <script>/*LIB_CHART*/</script>
@@ -226,13 +226,16 @@
       </div>
     </div>
     <div class="eyebrow">Área Cobranzas</div>
-    <h1>Unificación Bases de <em>Reservas</em> y <em>Primas por Cobrar</em></h1>
+    <h1>Cierre de <em>Reservas</em> y <em>Primas por Cobrar</em></h1>
     <p class="lead">Consolida los 5 sistemas, prepara la conciliación con Contabilidad y genera el Anexo E para la APS y el informe gerencial, en un solo lugar.</p>
     <div class="periodo">Cierre:
       <select id="mes"></select>
       <input id="anio" type="number" min="2020" max="2100">
       <span style="opacity:.75;font-weight:500">· Nacional Seguros Vida y Salud S.A.</span>
       <span id="corteTxt" style="color:#9FE3C4;font-weight:600"></span>
+    </div>
+    <div class="periodo" style="margin-left:8px" title="Se usa para convertir PREPAGA de dólares a bolivianos y en el Anexo E">T/C PREPAGA (USD → Bs):
+      <input id="tc" type="number" step="0.01" min="0.01" style="width:78px">
     </div>
   </div>
 </section>
@@ -247,7 +250,7 @@
   <!-- ================= PASO 1 ================= -->
   <section class="card panel step on" id="step1">
     <div class="section-title"><h2>Carga de <em>bases</em></h2><small>.xlsx · .xls · .csv — clic o arrastrar</small></div>
-    <p class="help">Sube el archivo descargado de cada sistema, tal cual sale. La app quita títulos, totales y pies de página, homologa las columnas y los ramos, y convierte <b>PREPAGA</b> de dólares a bolivianos (× 6,86).</p>
+    <p class="help">Sube el archivo descargado de cada sistema, tal cual sale. La app quita títulos, totales y pies de página, homologa las columnas y los ramos, y convierte <b>PREPAGA</b> de dólares a bolivianos con el tipo de cambio indicado arriba.</p>
     <div class="grid" id="slots"></div>
     <div class="actions">
       <button class="btn primary" id="btnCons" disabled>
@@ -278,6 +281,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
         Descargar archivo para Contabilidad
       </button>
+      <button class="btn" id="btnReset2">Limpiar</button>
     </div>
     <div class="progress" id="prog2"><div></div></div>
     <div class="msg" id="msg2"></div>
@@ -308,13 +312,14 @@
         </button>
         <button class="btn orange" id="btnPptx">PowerPoint</button>
         <button class="btn" id="btnPdf">PDF (1 hoja)</button>
+        <button class="btn" id="btnReset3">Limpiar</button>
       </div>
     </div>
     <div id="dash" class="hidden"></div>
   </section>
 </main>
 
-<footer><b>Nacional Seguros</b> · Área Cobranzas · Herramienta interna · 🔒 Los archivos se procesan en esta computadora: no se suben a ningún servidor.</footer>
+<footer><b>Cierre de Reservas y Primas por Cobrar</b> · Nacional Seguros · Área Cobranzas · 🔒 Los archivos se procesan en esta computadora: no se suben a ningún servidor.</footer>
 
 <script>
 (function () {
@@ -330,6 +335,10 @@
   $("mes").value = prev.getMonth(); $("anio").value = prev.getFullYear();
   const periodo = () => ({ mes: +$("mes").value, anio: +$("anio").value });
   const MES = () => Core.MESES[periodo().mes].toUpperCase();
+  const leerTC = () => { try { return parseFloat(localStorage.getItem("tcPrepaga")); } catch (e) { return NaN; } };
+  $("tc").value = (leerTC() > 0 ? leerTC() : Core.TIPO_CAMBIO_PREPAGA).toFixed(2);
+  $("tc").addEventListener("change", () => { const v = tcVal(); $("tc").value = v.toFixed(2); try { localStorage.setItem("tcPrepaga", String(v)); } catch (e) {} });
+  function tcVal() { const v = parseFloat(String($("tc").value).replace(",", ".")); return v > 0 ? v : Core.TIPO_CAMBIO_PREPAGA; }
 
   /* ---------- Worker (procesa sin congelar la pantalla) ---------- */
   const workerSrc = $("lib-xlsx").textContent + "\n" + $("lib-core").textContent + "\n(" + function () {
@@ -339,17 +348,24 @@
       const m = e.data;
       try {
         if (m.cmd === "sistema") {
-          const r = Core.procesarSistema(m.sistema, Core.readWorkbook(new Uint8Array(m.buf)));
+          const r = Core.procesarSistema(m.sistema, Core.readWorkbook(new Uint8Array(m.buf)), 1);
           st.sist[m.sistema] = r;
           const t = r.rows.reduce((s, x) => s + (typeof x[9] === "number" ? x[9] : 0), 0);
           postMessage({ id: m.id, ok: true, filas: r.rows.length, pxc: t, avisos: r.avisos, corte: r.corte });
         } else if (m.cmd === "quitar") {
           delete st.sist[m.sistema]; postMessage({ id: m.id, ok: true });
         } else if (m.cmd === "consolidar") {
-          const cons = Core.consolidar(st.sist);
+          const sis = { ...st.sist }; if (sis.PREPAGA) sis.PREPAGA = Core.aplicarTC(sis.PREPAGA, m.tc);
+          const cons = Core.consolidar(sis);
+          st.consPaso1 = cons.rows;
           st.cons = cons.rows;
           const out = buf(Core.libroConsolidado(cons));
           postMessage({ id: m.id, ok: true, resumen: cons.resumen, totales: cons.totales, buf: out }, [out.buffer || out]);
+        } else if (m.cmd === "limpiar") {
+          if (m.que === "conc") st.cons = st.consPaso1 || null;
+          if (m.que === "final") st.final = null;
+          if (m.que === "paso1") { st.sist = {}; st.cons = null; st.consPaso1 = null; }
+          postMessage({ id: m.id, ok: true });
         } else if (m.cmd === "cargarCons") {
           st.cons = Core.leerConsolidadoFinal(Core.readWorkbook(new Uint8Array(m.buf)));
           postMessage({ id: m.id, ok: true, filas: st.cons.length });
@@ -365,7 +381,7 @@
           st.final = Core.leerConsolidadoFinal(Core.readWorkbook(new Uint8Array(m.buf)));
           postMessage({ id: m.id, ok: true, analisis: Core.analizar(st.final), anexo: Core.anexoPorRamo(st.final) });
         } else if (m.cmd === "anexo") {
-          const out = buf(Core.libroAnexoE(st.final, m.periodo, m.empresa));
+          const out = buf(Core.libroAnexoE(st.final, m.periodo, m.empresa, m.tc));
           postMessage({ id: m.id, ok: true, buf: out }, [out.buffer || out]);
         }
       } catch (err) { postMessage({ id: m.id, ok: false, error: err.message || String(err) }); }
@@ -439,7 +455,7 @@
           corteDetectado = r.corte; $("mes").value = r.corte.mes; $("anio").value = r.corte.anio;
           $("corteTxt").textContent = `✔ Cierre detectado en ${s(sis)}: ${String(r.corte.dia).padStart(2, "0")}/${String(r.corte.mes + 1).padStart(2, "0")}/${r.corte.anio}`;
         }
-        setSlot(el, "loaded", `${file.name} · ${fmt(r.filas, 0)} registros · PxC ${fmt(r.pxc)}`);
+        setSlot(el, "loaded", `${file.name} · ${fmt(r.filas, 0)} registros · PxC ${sis === "PREPAGA" ? "USD " : ""}${fmt(r.pxc)}`);
       } catch (err) { setSlot(el, "error", err.message); }
       refresh1();
     });
@@ -455,7 +471,7 @@
     if (falt.length && !confirm(`Faltan: ${falt.join(", ")}.\n¿Generar el consolidado igualmente?`)) return;
     $("btnCons").disabled = true; busy(1, true); msg("msg1", "Consolidando y armando el Excel… (unos segundos)");
     try {
-      const r = await call({ cmd: "consolidar" });
+      const r = await call({ cmd: "consolidar", tc: tcVal() });
       const nombre = `01. APS REPORTE DE PRIMAS POR COBRAR Y RESERVAS CIERRE ${EMPRESA.corto} ${MES()} ${periodo().anio} MN.xlsx`;
       descargar(r.buf, nombre);
       const filas = r.resumen.map((x) => `<tr><td>${esc(x.sistema)}</td><td class="n">${fmt(x.filas, 0)}</td><td class="n">${fmt(x.primaTotal)}</td><td class="n">${fmt(x.pxc)}</td><td class="n">${fmt(x.totalMora)}</td><td class="n">${fmt(x.reserva)}</td></tr>`).join("");
@@ -471,10 +487,12 @@
     busy(1, false); refresh1();
   });
   $("btnReset1").addEventListener("click", async () => {
-    for (const s of Object.keys(cargados)) { await call({ cmd: "quitar", sistema: s }); delete cargados[s]; }
+    call({ cmd: "limpiar", que: "paso1" }); for (const s of Object.keys(cargados)) delete cargados[s];
     document.querySelectorAll("#slots .slot").forEach((el) => setSlot(el, "", "Seleccionar archivo"));
     corteDetectado = null; $("corteTxt").textContent = "";
     $("res1").classList.add("hidden"); msg("msg1", ""); refresh1();
+    done.delete(1); goStep(1);
+    $("concOrigen").textContent = "Usa el consolidado del paso 1, o sube aquí el Excel consolidado (BASE)."; $("btnConc").disabled = true;
   });
 
   /* ================= PASO 2 ================= */
@@ -534,6 +552,14 @@
     done.add(2);
   }
   $("btnConcDif").addEventListener("click", () => generarConc(true));
+  $("btnReset2").addEventListener("click", async () => {
+    call({ cmd: "limpiar", que: "conc" });
+    tecnico = null; contable = null;
+    setSlot($("slotConsC"), "", "Seleccionar archivo"); setSlot($("slotResp"), "", "Seleccionar archivo");
+    $("wrapTec").classList.add("hidden"); $("resConc").classList.add("hidden");
+    msg("msg2", ""); msg("msg2b", ""); done.delete(2); goStep(2);
+    $("btnConc").disabled = !done.has(1);
+  });
 
   /* ================= PASO 3 ================= */
   let A = null, charts = [];
@@ -555,9 +581,15 @@
   });
   $("btnAnexo").addEventListener("click", async () => {
     try {
-      const r = await call({ cmd: "anexo", periodo: periodo(), empresa: EMPRESA });
+      const r = await call({ cmd: "anexo", periodo: periodo(), empresa: EMPRESA, tc: tcVal() });
       descargar(r.buf, `02. ANEXO En Formato APS ${EMPRESA.corto} ${MES()} ${periodo().anio}.xlsx`);
     } catch (err) { msg("msg3", err.message, "err"); }
+  });
+  $("btnReset3").addEventListener("click", async () => {
+    call({ cmd: "limpiar", que: "final" });
+    charts.forEach((c) => c.destroy()); charts = []; A = null;
+    $("dash").innerHTML = ""; $("dash").classList.add("hidden"); $("act3").classList.add("hidden");
+    setSlot($("slotFinal"), "", "Seleccionar archivo"); msg("msg3", ""); done.delete(3); goStep(3);
   });
   $("btnPdf").addEventListener("click", () => generarPdf().catch((err) => { msg("msg3", "No se pudo generar el PDF: " + err.message, "err"); }));
 
@@ -722,7 +754,7 @@
         s.addShape(pptx.ShapeType.rect, { x: 0.45, y: 1.12, w: 0.35, h: 0.05, fill: { color: OR } });
         s.addText(etiqueta.toUpperCase(), { x: 0.88, y: 1.0, w: 8, h: 0.3, fontFace: FONT, fontSize: 10, bold: true, color: OR, charSpacing: 3 });
       }
-      s.addText(`Área Cobranzas · ${EMPRESA.nombre}`, { x: 0.45, y: 7.1, w: 8, h: 0.25, fontFace: FONT, fontSize: 8, color: MUT });
+      s.addText(`Cierre de Reservas y Primas por Cobrar · Área Cobranzas · ${EMPRESA.nombre}`, { x: 0.45, y: 7.1, w: 8, h: 0.25, fontFace: FONT, fontSize: 8, color: MUT });
     };
     const tabla = (s, head, rows, opt) => {
       const H = head.map((t, i) => ({ text: t, options: { bold: true, color: "FFFFFF", fill: { color: NAVY }, align: i ? "right" : "left" } }));

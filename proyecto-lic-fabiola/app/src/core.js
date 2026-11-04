@@ -1,5 +1,5 @@
 /* =====================================================================
-   Motor de cálculo — Unificación Bases de Reservas y Primas por Cobrar
+   Motor de cálculo — Cierre de Reservas y Primas por Cobrar
    Nacional Seguros Vida y Salud (NSVS) · Área Cobranzas
    Funciona igual en el navegador (window.Core) y en Node (pruebas).
    ===================================================================== */
@@ -78,7 +78,7 @@
     { id: "ELIFE II", titulo: "ELIFE II", archivo: "ELIFE II CIERRE …" },
     { id: "SALUD", titulo: "ESALUD", archivo: "ESALUD CIERRE …" },
     { id: "INMOTION", titulo: "INMOTION", archivo: "INMOTION MN CIERRE …" },
-    { id: "PREPAGA", titulo: "PREPAGA (USD → Bs × 6.86)", archivo: "PREPAGA ME REPORTE … (descarga en dólares)" },
+    { id: "PREPAGA", titulo: "PREPAGA (en dólares)", archivo: "PREPAGA ME REPORTE … (descarga en dólares)" },
   ];
 
   // Criterios 3 y 5 del prompt: homologación de descripciones de Ramo
@@ -149,7 +149,7 @@
    * Lee el libro de un sistema y devuelve filas homologadas.
    * @returns {{rows:any[][], extras:string[], extraVals:any[][], aviso:string[]}}
    */
-  function procesarSistema(sistema, wb) {
+  function procesarSistema(sistema, wb, tcPrepaga) {
     const avisos = [];
     // PREPAGA: se usa la hoja descargada del sistema (en dólares). Si hay varias, la primera con encabezado.
     let ws = null, rows = null, hr = -1;
@@ -172,7 +172,7 @@
     const extras = extrasIdx.map((j) => String(header[j]).trim());
     const polCol = colMap.indexOf(IDX.poliza);
     const out = [], extraVals = [];
-    const factor = sistema === "PREPAGA" ? TIPO_CAMBIO_PREPAGA : 1;
+    const factor = sistema === "PREPAGA" ? (tcPrepaga ?? TIPO_CAMBIO_PREPAGA) : 1;
     for (let i = hr + 1; i < rows.length; i++) {
       const src = rows[i];
       if (!src || vacio(src[polCol])) continue; // filas de totales, pies de página y vacías
@@ -193,6 +193,13 @@
     }
     if (!out.length) avisos.push(`El archivo de ${sistema} no tiene filas con número de póliza.`);
     return { rows: out, extras, extraVals, avisos, corte };
+  }
+
+  /** Devuelve una copia de PREPAGA con los importes en dólares convertidos a bolivianos */
+  function aplicarTC(res, tc) {
+    if (!res) return res;
+    const rows = res.rows.map((r) => { const x = r.slice(); for (const k of MONTO_COLS) if (typeof x[k] === "number") x[k] = x[k] * tc; return x; });
+    return { ...res, rows };
   }
 
   /** Une todos los sistemas: columnas homogéneas + columnas no homologadas al final (Criterio 1) */
@@ -322,18 +329,19 @@
     return orden.map((k) => ({ ramo: k, v: agg.get(k) }));
   }
 
-  function libroAnexoE(rows, periodo, empresa) {
+  function libroAnexoE(rows, periodo, empresa, tc) {
+    tc = tc || TIPO_CAMBIO_PREPAGA;
     const ramos = anexoPorRamo(rows);
     const ultimoDia = new Date(periodo.anio, periodo.mes + 1, 0).getDate();
     const aoa = [];
     const set = (r, c, v) => { aoa[r] = aoa[r] || []; aoa[r][c] = v; };
-    set(0, 15, "Anexo E"); set(1, 15, TIPO_CAMBIO_PREPAGA);
+    set(0, 15, "Anexo E"); set(1, 15, tc);
     set(2, 0, empresa.razonSocial);
     set(4, 0, "REPORTE DE PRIMAS POR COBRAR Y RESERVA PARA PRIMAS POR COBRAR");
     set(5, 0, "PÓLIZAS CON VIGENCIA DE UN AÑO Y SUPERIOR A UN AÑO");
     set(6, 0, `Al ${ultimoDia} de ${MESES[periodo.mes]} de ${periodo.anio}`);
     set(7, 0, "(Cifras expresadas en bolivianos)");
-    set(9, 15, TIPO_CAMBIO_PREPAGA);
+    set(9, 15, tc);
     set(10, 0, "Ramos"); set(10, 1, "Primas por Cobrar"); set(10, 7, "Total Primas por Cobrar"); set(10, 8, "Deducción Impuestos y Aportes");
     set(10, 9, "Primas por Cobrar Neto de Impuestos"); set(10, 10, "Reserva  para  Primas por Cobrar "); set(10, 15, " Total Reserva   Primas por Cobrar ");
     ["Sin Mora", "1 a 15 días", "16 a 45 días", "46 a 60 días", "61 a 90 días", "Mayor a 90 días"].forEach((t, i) => set(11, 1 + i, t));
@@ -590,7 +598,7 @@
 
   root.Core = {
     TIPO_CAMBIO_PREPAGA, FINAL_COLS, IDX, SISTEMAS, MESES, REG_NOMBRE, CONC_COLS,
-    readWorkbook, sheetRows, procesarSistema, consolidar, libroConsolidado, leerConsolidadoFinal,
+    readWorkbook, sheetRows, procesarSistema, aplicarTC, consolidar, libroConsolidado, leerConsolidadoFinal,
     anexoPorRamo, libroAnexoE, calcularConciliacion, libroConciliacion, leerRespuestaContabilidad, analizar, norm,
   };
 })(typeof window !== "undefined" ? window : globalThis);
