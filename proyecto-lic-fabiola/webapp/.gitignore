@@ -1,0 +1,18 @@
+# Compilados
+bin/
+obj/
+*.user
+# Frontend
+node_modules/
+.angular/
+dist/
+# Base de datos local y datos (nunca versionar datos reales)
+*.db
+*.db-shm
+*.db-wal
+App_Data/
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.pptx

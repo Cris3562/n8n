@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CierrePxC.Api/CierrePxC.Api.csproj" />
+    <Project Path="src/CierrePxC.Core/CierrePxC.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CierrePxC.Verificacion/CierrePxC.Verificacion.csproj" />
+  </Folder>
+</Solution>
