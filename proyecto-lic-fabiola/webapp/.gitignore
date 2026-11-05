@@ -16,3 +16,5 @@ App_Data/
 *.csv
 *.pdf
 *.pptx
+# Compilado del frontend (se genera con ng build)
+backend/src/CierrePxC.Api/wwwroot/

@@ -1,0 +1,157 @@
+<section class="hero">
+  <svg class="waves" viewBox="0 0 760 260" fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#4AA0F7" stop-opacity="0"/><stop offset="1" stop-color="#4AA0F7"/></linearGradient>
+      <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#1565D8" stop-opacity="0"/><stop offset="1" stop-color="#1565D8"/></linearGradient>
+    </defs>
+    <path d="M0 220 C 180 140, 330 260, 520 160 S 720 60, 760 70 L760 260 L0 260Z" fill="url(#g2)" opacity=".55"/>
+    <path d="M60 250 C 250 170, 400 250, 560 190 S 720 120, 760 130" stroke="url(#g1)" stroke-width="2"/>
+    <path d="M20 200 C 220 120, 360 210, 540 130 S 710 40, 760 40" stroke="url(#g1)" stroke-width="1.5" opacity=".7"/>
+  </svg>
+  <div class="hero-inner">
+    <div class="topbar">
+      <div class="logo-pill"><img src="logo.png" alt="Nacional Seguros"></div>
+      <div class="empresa" role="group" aria-label="Empresa">
+        @for (e of empresas(); track e.codigo) {
+          <button type="button" [class.on]="empresa()?.codigo === e.codigo" [disabled]="!e.activa" (click)="elegirEmpresa(e)"
+            [title]="e.activa ? e.nombre : 'Próximamente'">{{ e.nombre.replace('Nacional Seguros ', '') }}@if (!e.activa) {<small>próximamente</small>}</button>
+        }
+      </div>
+      <div class="userbar">
+        <div class="who"><b>{{ auth.usuario()?.nombre || auth.usuario()?.usuario }}</b>{{ auth.esAdmin() ? 'Administrador' : 'Usuario' }}</div>
+        @if (auth.esAdmin()) { <a class="btn ghost-w" routerLink="/admin">Administración</a> }
+        <button class="btn ghost-w" type="button" (click)="auth.salir()">Salir</button>
+      </div>
+    </div>
+    <div class="eyebrow">Área Cobranzas</div>
+    <h1>Cierre de <em>Reservas</em> y <em>Primas por Cobrar</em></h1>
+    <p class="lead">Consolida los sistemas, prepara la conciliación con Contabilidad y genera el Anexo E para la APS y el informe gerencial, en un solo lugar.</p>
+    <div class="periodo">Cierre:
+      <select [(ngModel)]="mes" name="mes">@for (m of MESES; track $index) { <option [ngValue]="$index">{{ m }}</option> }</select>
+      <input [(ngModel)]="anio" name="anio" type="number" min="2020" max="2100">
+      <span style="opacity:.75;font-weight:500">· {{ empresa()?.nombre }}</span>
+      <span style="color:#9FE3C4;font-weight:600">{{ corteTxt() }}</span>
+    </div>
+    @if (empresa(); as e) {
+      <div class="periodo" style="margin-left:8px">T/C PREPAGA (USD → Bs):
+        @if (editandoTc()) {
+          <input [(ngModel)]="tcNuevo" name="tc" type="number" step="0.01" min="0.01" style="width:84px">
+          <button class="mini" type="button" (click)="guardarTc()">Guardar</button>
+          <button class="mini" type="button" style="background:#5B7194" (click)="editandoTc.set(false)">✕</button>
+          <span style="color:#FFB4B4">{{ msgTc() }}</span>
+        } @else {
+          <span class="tcval">{{ e.tcPrepaga.toFixed(2) }}</span>
+          @if (auth.esAdmin()) { <button class="mini" type="button" (click)="editarTc()">Cambiar</button> }
+        }
+      </div>
+    }
+  </div>
+</section>
+
+<main>
+  <nav class="card tabs">
+    @for (t of [['Consolidar bases','Sistemas → Excel BASE'],['Conciliación','Envío y respuesta de Contabilidad'],['APS y Dashboard','Anexo E · PDF · PowerPoint']]; track $index) {
+      <button class="tab" [class.on]="paso() === $index + 1" [class.done]="paso() !== $index + 1 && hechos().has($index + 1)" (click)="paso.set($index + 1)">
+        <i>{{ $index + 1 }}</i><div><b>{{ t[0] }}</b><span>{{ t[1] }}</span></div></button>
+    }
+  </nav>
+
+  <!-- ================= PASO 1 ================= -->
+  @if (paso() === 1) {
+  <section class="card panel step on">
+    <div class="section-title"><h2>Carga de <em>bases</em></h2><small>.xlsx · .xls · .csv — clic o arrastrar</small></div>
+    <p class="help">Sube el archivo descargado de cada sistema, tal cual sale. La app quita títulos, totales y pies de página, homologa las columnas y los ramos, y convierte <b>PREPAGA</b> de dólares a bolivianos con el tipo de cambio indicado arriba.</p>
+    <div class="grid">
+      @for (s of SISTEMAS; track s.id; let i = $index) {
+        <app-slot [etiqueta]="'Sistema ' + (i + 1) + ' · ' + s.id" [titulo]="s.titulo" [estado]="slots()[s.id].estado" [texto]="slots()[s.id].texto" (archivo)="cargarSistema(s.id, $event)" />
+      }
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="button" [disabled]="cargados() === 0 || ocupado1()" (click)="consolidar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
+        Generar consolidado (Excel)
+      </button>
+      <button class="btn" type="button" (click)="limpiar1()">Limpiar</button>
+      <div class="counter"><b>{{ cargados() }}</b> de {{ SISTEMAS.length }} sistemas cargados</div>
+    </div>
+    @if (ocupado1()) { <div class="progress" style="display:block"><div></div></div> }
+    <div class="msg" [class.err]="err1()" [class.ok]="!err1() && msg1().startsWith('✔')">{{ msg1() }}</div>
+    @if (resultado1(); as r) {
+      <div class="tablewrap"><table>
+        <tr><th>Sistema</th><th class="n">Registros</th><th class="n">Prima Total</th><th class="n">Prima por Cobrar</th><th class="n">Total Mora</th><th class="n">Reserva</th></tr>
+        @for (x of r.resumen; track x.sistema) {
+          <tr><td>{{ x.sistema }}</td><td class="n">{{ fmt(x.filas, 0) }}</td><td class="n">{{ fmt(x.primaTotal) }}</td><td class="n">{{ fmt(x.pxC) }}</td><td class="n">{{ fmt(x.totalMora) }}</td><td class="n">{{ fmt(x.reserva) }}</td></tr>
+        }
+        <tr class="tot"><td>TOTAL</td><td class="n">{{ fmt(r.totales.filas, 0) }}</td><td class="n">{{ fmt(r.totales.primaTotal) }}</td><td class="n">{{ fmt(r.totales.pxC) }}</td><td class="n">{{ fmt(r.totales.totalMora) }}</td><td class="n">{{ fmt(r.totales.reserva) }}</td></tr>
+      </table></div>
+      <div class="note"><span>✍️</span><div><b>Siguiente paso:</b> si hay ajustes manuales (reclasificaciones de mora), hazlos en el Excel descargado. Después, en el <b>paso 3</b>, sube ese Excel ya ajustado para generar el Anexo E y el dashboard.</div></div>
+    }
+  </section>
+  }
+
+  <!-- ================= PASO 2 ================= -->
+  @if (paso() === 2) {
+  <section class="card panel step on">
+    <div class="section-title"><h2>Conciliación de <em>Primas por Cobrar</em></h2></div>
+    <p class="help">Calcula el <b>Saldo Técnico</b> por ramo contable (VI, VG, DEF, SL, DH, AP, SL-PRE, INMOTION) a partir del consolidado, separado por fuente y regional. Contabilidad completa la fila <b>"Saldo Final (Contable)"</b> y la app calcula las diferencias.</p>
+    <div class="sub-h"><span class="num">A</span>Origen del saldo técnico</div>
+    <p class="help">{{ hechos().has(1) ? '✔ Se usará el consolidado generado en el paso 1. También puedes subir otro Excel consolidado.' : 'Usa el consolidado del paso 1, o sube aquí el Excel consolidado (BASE).' }}</p>
+    <div class="grid"><app-slot etiqueta="Consolidado" titulo="Excel BASE (opcional si hiciste el paso 1)" [estado]="slotConsC().estado" [texto]="slotConsC().texto" acepta=".xlsx,.xls" (archivo)="cargarConsC($event)" /></div>
+    <div class="actions">
+      <button class="btn primary" type="button" [disabled]="!hayConsolidado() || ocupado2()" (click)="conciliacion(false)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
+        Descargar archivo para Contabilidad
+      </button>
+      <button class="btn" type="button" (click)="limpiar2()">Limpiar</button>
+    </div>
+    @if (ocupado2()) { <div class="progress" style="display:block"><div></div></div> }
+    <div class="msg" [class.err]="err2()" [class.ok]="!err2() && msg2().startsWith('✔')">{{ msg2() }}</div>
+    @if (tecnico(); as t) {
+      <div class="tablewrap"><table>
+        <tr><th>Saldo técnico</th>@for (c of CONC_COLS; track c) { <th class="n">{{ c === 'VIDA INDIVIDUAL CORTO PLAZO' ? 'VI CORTO PLAZO' : c }}</th> }</tr>
+        <tr class="tot"><td>Sistemas</td>@for (c of CONC_COLS; track c) { <td class="n">{{ fmt(t[c]) }}</td> }</tr>
+      </table></div>
+    }
+    <div class="sub-h"><span class="num">B</span>Respuesta de Contabilidad</div>
+    <p class="help">Sube el archivo que devolvió Contabilidad. La app lee la hoja <b>PrimaXcobrar</b>, fila <b>"Saldo Final (Contable)"</b>.</p>
+    <div class="grid"><app-slot etiqueta="Contabilidad" titulo="Archivo de respuesta" [estado]="slotResp().estado" [texto]="slotResp().texto" acepta=".xlsx,.xls" (archivo)="cargarRespuesta($event)" /></div>
+    @if (diferencias(); as d) {
+      <div class="tablewrap"><table>
+        <tr><th>Ramo contable</th><th class="n">Saldo técnico</th><th class="n">Saldo contable</th><th class="n">Diferencia</th><th>Estado</th></tr>
+        @for (f of d.filas; track f.ramo) {
+          <tr><td>{{ f.ramo }}</td><td class="n">{{ fmt(f.tec) }}</td><td class="n">{{ f.con === null ? '—' : fmt(f.con) }}</td><td class="n">{{ f.d === null ? '—' : fmt(f.d) }}</td>
+            <td>@switch (f.estado) { @case ('ok') { <span class="pill ok">Ok</span> } @case ('bad') { <span class="pill bad">Revisar</span> } @default { <span class="pill wait">Sin saldo contable</span> } }</td></tr>
+        }
+        <tr class="tot"><td>TOTAL</td><td class="n">{{ fmt(d.tt) }}</td><td class="n">{{ fmt(d.tc) }}</td><td class="n">{{ fmt(d.tc - d.tt) }}</td><td></td></tr>
+      </table></div>
+      <p class="help" style="margin-top:10px">Diferencia = Saldo contable − Saldo técnico. «Revisar» = diferencia mayor a 1 Bs.</p>
+      <div class="actions"><button class="btn orange" type="button" [disabled]="ocupado2() || !hayConsolidado()" (click)="conciliacion(true)">Descargar conciliación con diferencias</button></div>
+    }
+  </section>
+  }
+
+  <!-- ================= PASO 3 ================= -->
+  @if (paso() === 3) {
+  <section class="card panel step on">
+    <div class="section-title"><h2>Reporte <em>APS</em> y Dashboard gerencial</h2></div>
+    <p class="help">Sube el <b>consolidado final ya ajustado</b> (el Excel del paso 1 después de los ajustes manuales). Con ese archivo se generan el <b>Anexo E</b> en formato APS y el informe ejecutivo, descargable en <b>PDF</b> o <b>PowerPoint</b>.</p>
+    <div class="grid"><app-slot etiqueta="Consolidado final" titulo="Reporte Primas por Cobrar y Reservas (ajustado)" [estado]="slotFinal().estado" [texto]="slotFinal().texto" acepta=".xlsx,.xls" (archivo)="cargarFinal($event)" /></div>
+    @if (ocupado3()) { <div class="progress" style="display:block"><div></div></div> }
+    <div class="msg" [class.err]="err3()">{{ msg3() }}</div>
+    @if (analisis(); as A) {
+      <div class="actions">
+        <button class="btn primary" type="button" (click)="anexo()" [disabled]="ocupado3()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>
+          Anexo E (APS) · Excel
+        </button>
+        <button class="btn orange" type="button" (click)="pptx()" [disabled]="ocupado3()">PowerPoint</button>
+        <button class="btn" type="button" (click)="pdf()" [disabled]="ocupado3()">PDF (1 hoja)</button>
+        <button class="btn" type="button" (click)="limpiar3()">Limpiar</button>
+      </div>
+      <app-dashboard [analisis]="A" [periodo]="periodo" [empresa]="empresa()!.nombre" />
+    }
+  </section>
+  }
+</main>
+
+<footer><b>Cierre de Reservas y Primas por Cobrar</b> · Nacional Seguros · Área Cobranzas · 🔒 Los archivos con datos de clientes se procesan en memoria y no se almacenan.</footer>
